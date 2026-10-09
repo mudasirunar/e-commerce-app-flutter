@@ -27,7 +27,8 @@ coverage/
 app.*.symbols
 app.*.map.json
 
-# Build outputs and logs
+# Build outputs, compiler artifacts and logs
+*.class
 *.apk
 *.aab
 *.ipa
@@ -40,9 +41,12 @@ app.*.map.json
 hs_err_pid*
 replay_pid*
 
-# Android local state and signing credentials
+# Android/Kotlin local state, compiler caches and signing credentials
 .gradle/
 .cxx/
+.kotlin/
+.externalNativeBuild/
+captures/
 local.properties
 key.properties
 *.jks

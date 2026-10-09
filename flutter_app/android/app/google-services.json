@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "84912418111",
+    "project_id": "e-commerce-flutter-2a8d1",
+    "storage_bucket": "e-commerce-flutter-2a8d1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:84912418111:android:a6a6c80bb6b28ce301b78a",
+        "android_client_info": {
+          "package_name": "com.mudasir.ecommerceapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBARsEEw5WGo2x1eYYiw1H3yChoYsmhF9Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
