@@ -5,8 +5,7 @@
   "type": "module",
   "main": "api/health.js",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "echo 'Ready'"
+    "dev": "vercel dev"
   },
   "dependencies": {
     "@getbrevo/brevo": "^2.2.0",
