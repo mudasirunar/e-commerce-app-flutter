@@ -1,0 +1,79 @@
+# OS, editor and temporary files
+.DS_Store
+.AppleDouble/
+Thumbs.db
+Desktop.ini
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+*~
+*.tmp
+*.temp
+
+# Flutter/Dart generated files (native-specific ignores remain in platform folders)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub/
+.pub-cache/
+.widget_preview/
+build/
+coverage/
+**/doc/api/
+app.*.symbols
+app.*.map.json
+
+# Build outputs and logs
+*.apk
+*.aab
+*.ipa
+*.dSYM/
+*.xcarchive/
+*.log
+*.crash
+*.hprof
+*.stackdump
+hs_err_pid*
+replay_pid*
+
+# Android local state and signing credentials
+.gradle/
+.cxx/
+local.properties
+key.properties
+*.jks
+*.keystore
+
+# iOS dependency/generated/local state
+Pods/
+.symlinks/
+DerivedData/
+xcuserdata/
+.swiftpm/
+
+# Backend dependencies, compiler output and emulator state
+node_modules/
+/backend/lib/
+/backend/dist/
+/backend/.firebase/
+.firebase/
+/emulator-data/
+
+# Local environment and credentials; templates are safe to track
+.env
+.env.*
+!.env.example
+*.pem
+*.p12
+*.p8
+*.mobileprovision
+*service-account*.json
+*serviceAccount*.json
+firebase-adminsdk-*.json
+
+# Keep source, pubspec.lock, native configuration and dependency lockfiles tracked.
+# Local documentation exclusion is configured only in .git/info/exclude.
