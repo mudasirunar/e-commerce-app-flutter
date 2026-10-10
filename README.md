@@ -262,29 +262,6 @@ Required evidence covers auth/session/reset, browse/filter/sort states, cart ari
 
 Recorded checks: Flutter analysis passed with no issues. Platform IDs/labels, Android/iOS-only targets, iOS configuration syntax and the unchanged assignment PDF copy were verified. Build/test commands here are instructions, not claims of completed feature tests or generated release artifacts. Detailed evidence belongs in the local task tracker.
 
-## Assignment submission requirements
-
-- Complete modular Flutter source and backend source where used.
-- Installable APK with environment/run instructions.
-- Package, Firebase, schema, money and security documentation.
-- Firestore rules and access-control test evidence.
-- Category/product dataset with reproducible seed/setup instructions.
-- Key customer/admin screenshots and actual test results.
-- A 5–7 minute demo showing customer/admin flow, orders, stock integrity and security.
-- Explicit limitations and AI disclosure; exclude passwords, service accounts and private keys.
-
-Attach verified screenshots, APK and demo links to the release deliverables. No fabricated download links or evidence are included here.
-
 ## Scope and limitations
 
 Platforms are Android and iOS. Payment is simulated Cash on Delivery without a real gateway. The small-catalog design uses in-memory name search/filter/sort; larger catalogs require a revised search/query strategy. Images depend on selected URL availability and licensing. Email depends on verified senders, provider quotas and backend abuse controls. Configuration instructions are not certification that product requirements have been satisfied.
-
-## Documentation and working agreement
-
-Local `docs/` contains the assignment PDF, `PRD.md`, `ARCHITECTURE.md`, `DESIGN.md`, `AGENTS.md`, `TASK_TRACKER.md`, `SETUP.md`, `SECURITY.md`, `DATA_MODEL.md` and `TEST_PLAN.md`. Read root/local agent instructions before changing the project.
-
-After the initial repository setup, every Git command requires the owner's explicit permission. Documentation edits do not authorize a commit or push.
-
-## AI assistance
-
-Codex assisted with assignment review, project initialization and documentation. Flutter generated the platform scaffold. Assess delivered functionality and test evidence from source and actual validation records rather than inferring completion from this README.

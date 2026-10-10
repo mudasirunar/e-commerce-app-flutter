@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/theme_provider.dart';
+import 'screens/cart/cart_screen.dart';
+import 'screens/catalog/catalog_screen.dart';
+import 'screens/home/home_screen.dart';
+import 'screens/orders/orders_screen.dart';
+import 'screens/profile/profile_screen.dart';
 import 'theme/app_theme.dart';
 import 'utils/app_config.dart';
+import 'widgets/navigation/app_navigation_shell.dart';
 
-/// Root application widget configuring themes and app shell.
+/// Root application widget configuring themes and hosting the core navigation shell.
 class EcommerceApp extends StatelessWidget {
   final ThemeMode? themeMode;
 
@@ -25,13 +31,14 @@ class EcommerceApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: resolvedThemeMode,
-      home: const Scaffold(
-        body: Center(
-          child: Text(
-            'e commerce app',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-          ),
-        ),
+      home: const AppNavigationShell(
+        destinations: [
+          HomeScreen(),
+          CatalogScreen(),
+          CartScreen(),
+          OrdersScreen(),
+          ProfileScreen(),
+        ],
       ),
     );
   }

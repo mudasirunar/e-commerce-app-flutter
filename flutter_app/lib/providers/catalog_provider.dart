@@ -151,6 +151,8 @@ class CatalogProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCategory(String? categoryId) => selectCategory(categoryId);
+
   void setSearchQuery(String query) {
     _searchQuery = query;
     notifyListeners();
@@ -174,6 +176,17 @@ class CatalogProvider extends ChangeNotifier {
     _minPricePkr = null;
     _maxPricePkr = null;
     notifyListeners();
+  }
+
+  void resetFilters() => clearFilters();
+
+  Future<void> refresh() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    await _categoriesSub?.cancel();
+    await _productsSub?.cancel();
+    _init();
   }
 
   Product? findProductById(String productId) {

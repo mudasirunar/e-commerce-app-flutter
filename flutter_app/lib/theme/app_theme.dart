@@ -30,14 +30,21 @@ class AppTheme {
   // --- Shared Semantics ---
   static const Color success = Color(0xFF15803D);
   static const Color successContainer = Color(0xFFDCFCE7);
+  static const Color warning = Color(0xFFD97706);
+  static const Color warningContainer = Color(0xFFFEF3C7);
   static const Color error = Color(0xFFB91C1C);
   static const Color errorContainer = Color(0xFFFEE2E2);
+
+  // Background aliases
+  static const Color lightBackground = lightScaffold;
+  static const Color darkBackground = darkScaffold;
 
   // --- Spacing Scale ---
   static const double space4 = 4.0;
   static const double space8 = 8.0;
   static const double space12 = 12.0;
   static const double space16 = 16.0;
+  static const double space20 = 20.0;
   static const double space24 = 24.0;
   static const double space32 = 32.0;
   static const double space48 = 48.0;

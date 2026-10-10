@@ -1,3 +1,4 @@
+import 'delivery_info.dart';
 import '../utils/date_formatter.dart';
 
 /// Represents a customer or administrator profile stored in `users/{uid}`.
@@ -26,6 +27,11 @@ class UserProfile {
   });
 
   bool get isAdmin => role == 'admin';
+  String get displayName => name;
+
+  DeliveryInfo? get defaultDeliveryInfo => defaultAddress.isNotEmpty
+      ? DeliveryInfo(fullName: name, phone: phone, address: defaultAddress)
+      : null;
 
   factory UserProfile.fromMap(Map<String, dynamic> data, String uid) {
     return UserProfile(

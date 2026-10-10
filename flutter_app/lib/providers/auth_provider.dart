@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../models/delivery_info.dart';
 import '../models/user_profile.dart';
 import '../services/auth/auth_service.dart';
 import '../services/firestore/firestore_service.dart';
@@ -25,6 +26,7 @@ class AuthProvider extends ChangeNotifier {
 
   User? get user => _user;
   UserProfile? get profile => _profile;
+  UserProfile? get userProfile => _profile;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _user != null;
@@ -145,6 +147,19 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Aliases for convenience
+  Future<bool> signInWithEmail({
+    required String email,
+    required String password,
+  }) => signIn(email: email, password: password);
+
+  Future<bool> signUpWithEmail({
+    required String email,
+    required String password,
+    String? displayName,
+    String? name,
+  }) => signUp(email: email, password: password, name: displayName ?? name ?? '');
+
   /// Signs out of the application.
   Future<void> signOut() async {
     _setLoading(true);
@@ -157,15 +172,20 @@ class AuthProvider extends ChangeNotifier {
 
   /// Updates allowed profile delivery information.
   Future<bool> updateDeliveryProfile({
-    required String defaultAddress,
-    required String phone,
+    String? defaultAddress,
+    String? phone,
+    DeliveryInfo? defaultDeliveryInfo,
   }) async {
     if (_user == null) return false;
+    final addr = defaultDeliveryInfo != null ? defaultDeliveryInfo.address : defaultAddress;
+    final ph = defaultDeliveryInfo != null ? defaultDeliveryInfo.phone : phone;
+    if (addr == null || ph == null) return false;
+
     try {
       await _firestoreService.updateDeliveryProfile(
         uid: _user!.uid,
-        defaultAddress: defaultAddress,
-        phone: phone,
+        defaultAddress: addr,
+        phone: ph,
       );
       return true;
     } catch (e) {

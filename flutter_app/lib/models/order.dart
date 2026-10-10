@@ -139,6 +139,7 @@ class OrderModel {
 
   /// Whether a regular customer is authorized to cancel this order (Pending only).
   bool get canCustomerCancel => status == OrderStatus.pending;
+  bool get canBeCancelledByCustomer => canCustomerCancel;
 
   /// Whether the order is in a terminal non-modifiable state.
   bool get isTerminal => status == OrderStatus.delivered || status == OrderStatus.cancelled;
@@ -150,6 +151,7 @@ class OrderModel {
 
   /// Total count of physical units in this order.
   int get totalItemCount => items.fold(0, (sum, item) => sum + item.quantity);
+  int get totalQuantity => totalItemCount;
 
   factory OrderModel.fromMap(Map<String, dynamic> data, String orderId) {
     final rawItems = data['items'] as List<dynamic>? ?? [];

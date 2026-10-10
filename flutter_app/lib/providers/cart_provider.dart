@@ -218,6 +218,9 @@ class CartProvider extends ChangeNotifier {
     }
   }
 
+  /// Alias for removeFromCart.
+  Future<bool> removeItem(String productId) => removeFromCart(productId);
+
   /// Clears all items in the cart.
   Future<void> clearCart() async {
     if (_userId == null) return;
