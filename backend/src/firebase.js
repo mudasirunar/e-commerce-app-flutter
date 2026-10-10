@@ -31,14 +31,20 @@ export function getFirebaseAdmin() {
   }
 
   // 2. Try local service-account.json
-  const defaultLocalKey = path.resolve(process.cwd(), 'service-account.json');
+  const currentDirKey = path.resolve(process.cwd(), 'service-account.json');
+  const backendDirKey = path.resolve(process.cwd(), 'backend', 'service-account.json');
+  const moduleRelativeKey = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..', 'service-account.json');
   const envLocalKey = process.env.GOOGLE_APPLICATION_CREDENTIALS
     ? path.resolve(process.cwd(), process.env.GOOGLE_APPLICATION_CREDENTIALS)
     : null;
 
   const keyPath = (envLocalKey && fs.existsSync(envLocalKey))
     ? envLocalKey
-    : (fs.existsSync(defaultLocalKey) ? defaultLocalKey : null);
+    : (fs.existsSync(backendDirKey)
+      ? backendDirKey
+      : (fs.existsSync(currentDirKey)
+        ? currentDirKey
+        : (fs.existsSync(moduleRelativeKey) ? moduleRelativeKey : null)));
 
   if (keyPath) {
     const serviceAccount = JSON.parse(fs.readFileSync(keyPath, 'utf8'));

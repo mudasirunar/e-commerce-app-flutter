@@ -1,6 +1,7 @@
 import { getFirebaseAdmin } from '../../src/firebase.js';
 import { sendOtpEmail } from '../../src/brevo.js';
 import { generateOtp, hashOtp, generateSecureToken } from '../../src/crypto-utils.js';
+import { verifyAppCheck } from '../../src/auth-middleware.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
@@ -12,6 +13,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 1. Verify App Check token if configured/provided
+    await verifyAppCheck(req);
+
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const { email, purpose = 'password_reset' } = body;
 
@@ -45,23 +49,8 @@ export default async function handler(req, res) {
       }
     }
 
-    // Cooldown check (60-second cooldown per recipient & purpose)
     const challengeKey = `${normalizedEmail}_${purpose}`;
     const challengeRef = db.collection('_otp_challenges').doc(challengeKey);
-    const existingSnap = await challengeRef.get();
-
-    if (existingSnap.exists) {
-      const existingData = existingSnap.data();
-      const timeSinceLast = Date.now() - (existingData.createdAt || 0);
-      const cooldownMs = 60 * 1000;
-
-      if (timeSinceLast < cooldownMs) {
-        const remainingSeconds = Math.ceil((cooldownMs - timeSinceLast) / 1000);
-        return res.status(429).json({
-          error: `Please wait ${remainingSeconds} seconds before requesting another code.`
-        });
-      }
-    }
 
     // Generate code and secure hash
     const otp = generateOtp();
@@ -69,21 +58,39 @@ export default async function handler(req, res) {
     const challengeId = generateSecureToken();
     const expiryMinutes = 5;
     const expiresAt = Date.now() + (expiryMinutes * 60 * 1000);
+    const cooldownMs = 60 * 1000;
 
-    // Save challenge to Firestore (storing only hash, never raw OTP)
-    await challengeRef.set({
-      challengeId,
-      email: normalizedEmail,
-      purpose,
-      otpHash,
-      attempts: 0,
-      maxAttempts: 5,
-      expiresAt,
-      createdAt: Date.now(),
-      consumed: false
+    // ATOMIC TRANSACTION: Check cooldown and reserve challenge creation
+    // Prevents parallel requests from bypassing cooldown or sending duplicate emails
+    await db.runTransaction(async (transaction) => {
+      const existingSnap = await transaction.get(challengeRef);
+
+      if (existingSnap.exists) {
+        const existingData = existingSnap.data();
+        const timeSinceLast = Date.now() - (existingData.createdAt || 0);
+
+        if (timeSinceLast < cooldownMs) {
+          const remainingSeconds = Math.ceil((cooldownMs - timeSinceLast) / 1000);
+          const cooldownErr = new Error(`Please wait ${remainingSeconds} seconds before requesting another code.`);
+          cooldownErr.statusCode = 429;
+          throw cooldownErr;
+        }
+      }
+
+      transaction.set(challengeRef, {
+        challengeId,
+        email: normalizedEmail,
+        purpose,
+        otpHash,
+        attempts: 0,
+        maxAttempts: 5,
+        expiresAt,
+        createdAt: Date.now(),
+        consumed: false
+      });
     });
 
-    // Send email via Brevo
+    // Send email via Brevo only after atomic lock is secured
     await sendOtpEmail({
       toEmail: normalizedEmail,
       otp,
@@ -99,9 +106,8 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error in send-otp handler:', error);
-    return res.status(500).json({
-      error: 'Failed to send verification code. Please try again.',
-      details: error.message
+    return res.status(error.statusCode || 500).json({
+      error: error.message || 'Failed to send verification code.'
     });
   }
 }

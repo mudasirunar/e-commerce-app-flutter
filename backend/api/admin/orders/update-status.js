@@ -41,8 +41,24 @@ export default async function handler(req, res) {
         return; // Idempotent no-op
       }
 
-      if (currentStatus === 'Delivered' || currentStatus === 'Cancelled') {
-        throw new Error(`Cannot transition from terminal status "${currentStatus}".`);
+      // Explicit status transition state machine from ARCHITECTURE.md
+      const ALLOWED_TRANSITIONS = {
+        Pending: ['Confirmed', 'Cancelled'],
+        Confirmed: ['Processing', 'Cancelled'],
+        Processing: ['Shipped', 'Cancelled'],
+        Shipped: ['Delivered'],
+        Delivered: [],
+        Cancelled: []
+      };
+
+      const allowed = ALLOWED_TRANSITIONS[currentStatus] || [];
+      if (!allowed.includes(newStatus)) {
+        const errorMsg = allowed.length > 0
+          ? `Invalid status transition from "${currentStatus}" to "${newStatus}". Allowed transitions: ${allowed.join(', ')}.`
+          : `Status "${currentStatus}" is terminal and cannot be transitioned to any other status.`;
+        const transErr = new Error(errorMsg);
+        transErr.statusCode = 400;
+        throw transErr;
       }
 
       // If transitioning to Cancelled, restore stock

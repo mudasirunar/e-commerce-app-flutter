@@ -16,6 +16,7 @@ export async function authenticateUser(req) {
   }
 
   const token = authHeader.slice(7).trim();
+
   const admin = getFirebaseAdmin();
 
   try {
@@ -39,5 +40,42 @@ export function requireAdmin(decodedToken) {
     const error = new Error('Forbidden: Admin access required.');
     error.statusCode = 403;
     throw error;
+  }
+}
+
+/**
+ * Validates Firebase App Check token in X-Firebase-AppCheck header if present or required.
+ * 
+ * @param {Object} req - Vercel / Node HTTP request
+ * @param {Object} [options]
+ * @param {boolean} [options.required=false] - If true, throws 401 when token is missing
+ * @returns {Promise<Object|null>} Decoded App Check claims or null
+ */
+export async function verifyAppCheck(req, { required = false } = {}) {
+  const headers = req.headers || {};
+  const appCheckToken = headers['x-firebase-appcheck'] || headers['X-Firebase-AppCheck'];
+  
+  if (!appCheckToken) {
+    if (required || process.env.ENFORCE_APP_CHECK === 'true') {
+      const error = new Error('Unauthorized: Missing required X-Firebase-AppCheck token.');
+      error.statusCode = 401;
+      throw error;
+    }
+    return null;
+  }
+
+  const admin = getFirebaseAdmin();
+  try {
+    const claims = await admin.appCheck().verifyToken(appCheckToken);
+    return claims;
+  } catch (err) {
+    if (required || process.env.ENFORCE_APP_CHECK === 'true') {
+      const error = new Error('Unauthorized: Invalid or expired App Check token.');
+      error.statusCode = 401;
+      error.details = err.message;
+      throw error;
+    }
+    console.warn('App Check verification warning (development fallback):', err.message);
+    return null;
   }
 }

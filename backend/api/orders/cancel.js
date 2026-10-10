@@ -1,5 +1,5 @@
 import { getFirebaseAdmin } from '../../src/firebase.js';
-import { authenticateUser } from '../../src/auth-middleware.js';
+import { authenticateUser, verifyAppCheck } from '../../src/auth-middleware.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
@@ -11,6 +11,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 1. Verify App Check if configured/provided
+    await verifyAppCheck(req);
+
     const user = await authenticateUser(req);
     const uid = user.uid;
     const isAdmin = !!(user.admin || user.role === 'admin');

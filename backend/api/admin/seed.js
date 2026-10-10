@@ -1,4 +1,5 @@
 import { getFirebaseAdmin } from '../../src/firebase.js';
+import { authenticateUser, requireAdmin } from '../../src/auth-middleware.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
@@ -10,6 +11,19 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Enforce admin authorization: require valid Firebase ID token with admin claims,
+    // or internal server bootstrap key if configured
+    const headers = req.headers || {};
+    const adminKey = headers['x-admin-key'] || headers['X-Admin-Key'];
+    const expectedKey = process.env.ADMIN_BOOTSTRAP_KEY;
+
+    if (expectedKey && adminKey && adminKey === expectedKey) {
+      // Authorized via server bootstrap key
+    } else {
+      const user = await authenticateUser(req);
+      requireAdmin(user);
+    }
+
     const admin = getFirebaseAdmin();
     const db = admin.firestore();
 
@@ -431,9 +445,10 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Seed execution error:', error);
-    return res.status(500).json({
-      error: 'Failed to seed database.',
-      details: error.message
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      error: error.message || 'Failed to seed database.',
+      details: error.details || error.message
     });
   }
 }

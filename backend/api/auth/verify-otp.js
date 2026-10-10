@@ -1,5 +1,6 @@
 import { getFirebaseAdmin } from '../../src/firebase.js';
 import { hashOtp, generateSecureToken } from '../../src/crypto-utils.js';
+import { verifyAppCheck } from '../../src/auth-middleware.js';
 
 export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
@@ -11,6 +12,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 1. Verify App Check token if configured/provided
+    await verifyAppCheck(req);
+
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const { email, code, purpose = 'password_reset' } = body;
 
@@ -26,58 +30,92 @@ export default async function handler(req, res) {
 
     const challengeKey = `${normalizedEmail}_${purpose}`;
     const challengeRef = db.collection('_otp_challenges').doc(challengeKey);
-    const snap = await challengeRef.get();
-
-    if (!snap.exists) {
-      return res.status(400).json({ error: 'No active verification code found. Please request a new one.' });
-    }
-
-    const data = snap.data();
-
-    if (data.consumed) {
-      return res.status(400).json({ error: 'This verification code has already been used.' });
-    }
-
-    if (Date.now() > data.expiresAt) {
-      return res.status(400).json({ error: 'Verification code has expired. Please request a new code.' });
-    }
-
-    if (data.attempts >= (data.maxAttempts || 5)) {
-      return res.status(400).json({ error: 'Maximum attempts reached. Please request a new verification code.' });
-    }
-
-    // Compare hash
     const computedHash = hashOtp(cleanCode, normalizedEmail, purpose);
 
-    if (computedHash !== data.otpHash) {
-      await challengeRef.update({
-        attempts: (data.attempts || 0) + 1
+    // ATOMIC TRANSACTION: Check attempts, verify hash, and consume challenge atomically
+    // Prevents concurrent attempts from bypassing attempt ceiling or double-consuming
+    const result = await db.runTransaction(async (transaction) => {
+      const snap = await transaction.get(challengeRef);
+
+      if (!snap.exists) {
+        const err = new Error('No active verification code found. Please request a new one.');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      const data = snap.data();
+
+      if (data.consumed) {
+        const err = new Error('This verification code has already been used.');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      if (Date.now() > data.expiresAt) {
+        const err = new Error('Verification code has expired. Please request a new code.');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      const currentAttempts = data.attempts || 0;
+      const maxAttempts = data.maxAttempts || 5;
+
+      if (currentAttempts >= maxAttempts) {
+        const err = new Error('Maximum attempts reached. Please request a new verification code.');
+        err.statusCode = 400;
+        throw err;
+      }
+
+      // Check hash
+      if (computedHash !== data.otpHash) {
+        const nextAttempts = currentAttempts + 1;
+        transaction.update(challengeRef, { attempts: nextAttempts });
+        const attemptsLeft = maxAttempts - nextAttempts;
+        return {
+          valid: false,
+          attemptsLeft,
+          locked: attemptsLeft <= 0
+        };
+      }
+
+      // Code is valid! Mark challenge as consumed atomically
+      transaction.update(challengeRef, {
+        consumed: true,
+        consumedAt: Date.now()
       });
-      const attemptsLeft = (data.maxAttempts || 5) - ((data.attempts || 0) + 1);
+
+      // If purpose is password_reset, generate and write reset token atomically in the same transaction
+      let issuedToken = null;
+      if (purpose === 'password_reset') {
+        issuedToken = generateSecureToken();
+        const tokenRef = db.collection('_password_resets').doc(issuedToken);
+        transaction.set(tokenRef, {
+          email: normalizedEmail,
+          token: issuedToken,
+          expiresAt: Date.now() + (15 * 60 * 1000), // 15 minutes
+          used: false,
+          createdAt: Date.now()
+        });
+      }
+
+      return {
+        valid: true,
+        resetToken: issuedToken
+      };
+    });
+
+    if (!result.valid) {
       return res.status(400).json({
-        error: `Invalid code. ${attemptsLeft > 0 ? `${attemptsLeft} attempts remaining.` : 'Code locked.'}`
+        error: result.locked
+          ? 'Maximum attempts reached. Please request a new verification code.'
+          : `Invalid code. ${result.attemptsLeft} attempts remaining.`
       });
     }
 
-    // Code is valid! Mark challenge as consumed
-    await challengeRef.update({ consumed: true });
+    const resetToken = result.resetToken;
 
-    // Handle purpose-specific success actions
-    let resetToken = null;
-
-    if (purpose === 'password_reset') {
-      // Issue a scoped 15-minute reset token for resetting password
-      resetToken = generateSecureToken();
-      const tokenRef = db.collection('_password_resets').doc(resetToken);
-      await tokenRef.set({
-        email: normalizedEmail,
-        token: resetToken,
-        expiresAt: Date.now() + (15 * 60 * 1000), // 15 minutes
-        used: false,
-        createdAt: Date.now()
-      });
-    } else if (purpose === 'email_verification') {
-      // Mark email as verified in Firebase Auth
+    // If purpose is email_verification, update Firebase Auth
+    if (purpose === 'email_verification') {
       try {
         const user = await admin.auth().getUserByEmail(normalizedEmail);
         await admin.auth().updateUser(user.uid, { emailVerified: true });
@@ -94,9 +132,8 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Error in verify-otp handler:', error);
-    return res.status(500).json({
-      error: 'Failed to verify code. Please try again.',
-      details: error.message
+    return res.status(error.statusCode || 500).json({
+      error: error.message || 'Failed to verify code.'
     });
   }
 }

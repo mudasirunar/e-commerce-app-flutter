@@ -1,5 +1,5 @@
 import { getFirebaseAdmin } from '../../src/firebase.js';
-import { authenticateUser } from '../../src/auth-middleware.js';
+import { authenticateUser, verifyAppCheck } from '../../src/auth-middleware.js';
 import { generateSecureToken } from '../../src/crypto-utils.js';
 
 export default async function handler(req, res) {
@@ -12,15 +12,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Authenticate customer
+    // 1. Verify App Check (if enabled/provided)
+    await verifyAppCheck(req);
+
+    // 2. Authenticate customer
     const user = await authenticateUser(req);
     const uid = user.uid;
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
     const { attemptId, items, deliveryName, deliveryPhone, deliveryAddress } = body;
 
-    // 2. Validate inputs
-    if (!attemptId || typeof attemptId !== 'string') {
+    // 3. Validate inputs
+    if (!attemptId || typeof attemptId !== 'string' || !attemptId.trim()) {
       return res.status(400).json({ error: 'attemptId is required for safe idempotency.' });
     }
 
@@ -32,40 +35,61 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'deliveryName, deliveryPhone, and deliveryAddress are required.' });
     }
 
+    // 4. Consolidate and validate item entries (combine duplicate productIds cleanly)
+    const itemMap = new Map();
+    for (const item of items) {
+      if (!item || !item.productId || typeof item.productId !== 'string' || !item.productId.trim()) {
+        return res.status(400).json({ error: 'Each order item must specify a valid productId.' });
+      }
+      const qty = parseInt(item.quantity, 10);
+      if (isNaN(qty) || qty <= 0) {
+        return res.status(400).json({ error: `Invalid quantity for product ${item.productId}. Must be a positive integer.` });
+      }
+      const pid = item.productId.trim();
+      itemMap.set(pid, (itemMap.get(pid) || 0) + qty);
+    }
+
+    const consolidatedItems = Array.from(itemMap.entries()).map(([productId, quantity]) => ({
+      productId,
+      quantity
+    }));
+
     const admin = getFirebaseAdmin();
     const db = admin.firestore();
 
-    // 3. Check for existing attempt (Idempotent retry handling)
-    const attemptRef = db.collection('users').doc(uid).collection('checkoutAttempts').doc(attemptId);
-    const existingAttempt = await attemptRef.get();
+    const cleanAttemptId = attemptId.trim();
+    const attemptRef = db.collection('users').doc(uid).collection('checkoutAttempts').doc(cleanAttemptId);
 
-    if (existingAttempt.exists) {
-      const existingOrderId = existingAttempt.data().orderId;
-      const existingOrderSnap = await db.collection('orders').doc(existingOrderId).get();
-      if (existingOrderSnap.exists) {
-        return res.status(200).json({
-          success: true,
-          idempotentReplay: true,
-          order: existingOrderSnap.data()
-        });
-      }
-    }
-
-    // 4. Run atomic checkout in a single Firestore transaction
+    // 5. Run atomic checkout in a single Firestore transaction
     const orderId = `ord_${Date.now()}_${generateSecureToken().slice(0, 6)}`;
     const orderRef = db.collection('orders').doc(orderId);
 
     const transactionResult = await db.runTransaction(async (transaction) => {
-      // Step A: Read all product records first (read before write)
-      const productRefs = items.map(item => db.collection('products').doc(item.productId));
+      // Step A: ATOMIC IDEMPOTENCY CHECK INSIDE TRANSACTION
+      // Prevents simultaneous duplicate checkout requests from double-ordering
+      const attemptSnap = await transaction.get(attemptRef);
+      if (attemptSnap.exists) {
+        const existingOrderId = attemptSnap.data().orderId;
+        const existingOrderRef = db.collection('orders').doc(existingOrderId);
+        const existingOrderSnap = await transaction.get(existingOrderRef);
+        if (existingOrderSnap.exists) {
+          return {
+            idempotentReplay: true,
+            order: existingOrderSnap.data()
+          };
+        }
+      }
+
+      // Step B: Read all product records first (read before write)
+      const productRefs = consolidatedItems.map(item => db.collection('products').doc(item.productId));
       const productSnaps = await Promise.all(productRefs.map(ref => transaction.get(ref)));
 
       let subtotalMinor = 0;
       const itemSnapshots = [];
       const stockUpdates = [];
 
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
+      for (let i = 0; i < consolidatedItems.length; i++) {
+        const item = consolidatedItems[i];
         const snap = productSnaps[i];
 
         if (!snap.exists) {
@@ -78,13 +102,8 @@ export default async function handler(req, res) {
           throw new Error(`Product "${product.name}" is no longer available.`);
         }
 
-        const quantity = parseInt(item.quantity, 10);
-        if (isNaN(quantity) || quantity <= 0) {
-          throw new Error(`Invalid quantity for product "${product.name}".`);
-        }
-
         const currentStock = product.stockQuantity || 0;
-        if (currentStock < quantity) {
+        if (currentStock < item.quantity) {
           throw new Error(`Insufficient stock for "${product.name}". Only ${currentStock} remaining.`);
         }
 
@@ -93,19 +112,19 @@ export default async function handler(req, res) {
           throw new Error(`Invalid price record for "${product.name}".`);
         }
 
-        subtotalMinor += priceMinor * quantity;
+        subtotalMinor += priceMinor * item.quantity;
 
         itemSnapshots.push({
           productId: item.productId,
           nameSnapshot: product.name,
           unitPriceMinorSnapshot: priceMinor,
-          quantity: quantity,
+          quantity: item.quantity,
           imageUrl: product.imageUrl || ''
         });
 
         stockUpdates.push({
           ref: snap.ref,
-          newStock: currentStock - quantity
+          newStock: currentStock - item.quantity
         });
       }
 
@@ -113,7 +132,7 @@ export default async function handler(req, res) {
       const deliveryFeeMinor = subtotalMinor >= 500000 ? 0 : 20000;
       const totalMinor = subtotalMinor + deliveryFeeMinor;
 
-      // Step B: Write stock decrements
+      // Step C: Write stock decrements
       for (const update of stockUpdates) {
         transaction.update(update.ref, {
           stockQuantity: update.newStock,
@@ -121,12 +140,12 @@ export default async function handler(req, res) {
         });
       }
 
-      // Step C: Create order document
+      // Step D: Create order document
       const orderData = {
         orderId,
         userId: uid,
         userEmail: user.email || '',
-        attemptId,
+        attemptId: cleanAttemptId,
         items: itemSnapshots,
         subtotalMinor,
         deliveryFeeMinor,
@@ -144,16 +163,33 @@ export default async function handler(req, res) {
 
       transaction.set(orderRef, orderData);
 
-      // Step D: Record idempotency attempt
+      // Step E: Record idempotency attempt
       transaction.set(attemptRef, {
         orderId,
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
-      return { orderId, totalMinor, subtotalMinor, deliveryFeeMinor, items: itemSnapshots };
+      return {
+        idempotentReplay: false,
+        orderId,
+        totalMinor,
+        subtotalMinor,
+        deliveryFeeMinor,
+        items: itemSnapshots,
+        order: orderData
+      };
     });
 
-    // 5. Clean up user cart asynchronously (non-blocking)
+    if (transactionResult.idempotentReplay) {
+      return res.status(200).json({
+        success: true,
+        idempotentReplay: true,
+        message: 'Existing order returned (idempotent replay).',
+        order: transactionResult.order
+      });
+    }
+
+    // 6. Clean up user cart asynchronously (non-blocking)
     try {
       const cartSnap = await db.collection('users').doc(uid).collection('cart').get();
       if (!cartSnap.empty) {
