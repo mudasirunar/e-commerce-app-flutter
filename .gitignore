@@ -53,10 +53,20 @@ key.properties
 *.keystore
 
 # iOS dependency/generated/local state
-Pods/
-.symlinks/
-DerivedData/
-xcuserdata/
+**/Pods/
+**/.symlinks/
+**/DerivedData/
+**/xcuserdata/
+**/*.xcworkspace/xcuserdata/
+**/*.xcodeproj/xcuserdata/
+**/*.xcodeproj/project.xcworkspace/xcuserdata/
+**/Flutter/ephemeral/
+**/Flutter/Generated.xcconfig
+**/Flutter/flutter_export_environment.sh
+**/Runner/GeneratedPluginRegistrant.*
+**/ServiceDefinitions.json
+**/ios/.last_build_id
+**/ios/Flutter/.last_build_id
 .swiftpm/
 
 # Backend dependencies, compiler output and emulator state
