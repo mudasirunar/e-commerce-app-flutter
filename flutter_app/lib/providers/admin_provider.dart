@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/order.dart';
+import '../services/api/admin_api_service.dart';
+import '../services/api/api_exception.dart';
 import '../services/firestore/firestore_service.dart';
 
-/// Provider managing privileged admin operations (all-orders view, status overview).
+/// Provider managing privileged administrator backend operations and order oversight.
 class AdminProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
+  final AdminApiService? _adminApiService;
   bool _isAdmin = false;
 
   List<OrderModel> _allOrders = [];
@@ -14,7 +17,7 @@ class AdminProvider extends ChangeNotifier {
 
   StreamSubscription<List<OrderModel>>? _ordersSub;
 
-  AdminProvider(this._firestoreService);
+  AdminProvider(this._firestoreService, [this._adminApiService]);
 
   List<OrderModel> get allOrders => _allOrders;
   bool get isLoading => _isLoading;
@@ -52,10 +55,70 @@ class AdminProvider extends ChangeNotifier {
   }
 
   OrderModel? getOrderById(String orderId) {
+    for (final o in _allOrders) {
+      if (o.orderId == orderId) return o;
+    }
+    return null;
+  }
+
+  /// Advances order status through the enforced backend state machine.
+  Future<bool> updateOrderStatus(String orderId, String newStatus, {String? note}) async {
+    if (_adminApiService == null) return false;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
     try {
-      return _allOrders.firstWhere((o) => o.orderId == orderId);
-    } catch (_) {
-      return null;
+      await _adminApiService.updateOrderStatus(
+        orderId: orderId,
+        newStatus: newStatus,
+        note: note,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Failed to update order status.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Updates inventory stock count for a catalog item.
+  Future<bool> updateStock(String productId, int newStock) async {
+    if (_adminApiService == null) return false;
+    try {
+      await _adminApiService.updateProductStock(
+        productId: productId,
+        newStock: newStock,
+      );
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Toggles visibility for a product.
+  Future<bool> toggleActive(String productId, bool isActive) async {
+    if (_adminApiService == null) return false;
+    try {
+      await _adminApiService.toggleProductActive(
+        productId: productId,
+        isActive: isActive,
+      );
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      notifyListeners();
+      return false;
     }
   }
 

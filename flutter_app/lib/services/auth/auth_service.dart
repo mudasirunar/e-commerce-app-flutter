@@ -2,15 +2,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 /// Service managing client-side Firebase Authentication operations.
 class AuthService {
-  final FirebaseAuth _auth;
+  final FirebaseAuth? _auth;
 
-  AuthService({FirebaseAuth? auth}) : _auth = auth ?? FirebaseAuth.instance;
+  AuthService([this._auth]);
 
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  FirebaseAuth get _client => _auth ?? FirebaseAuth.instance;
 
-  User? get currentUser => _auth.currentUser;
+  Stream<User?> get authStateChanges => _client.authStateChanges();
 
-  bool get isAuthenticated => _auth.currentUser != null;
+  User? get currentUser => _client.currentUser;
+
+  bool get isAuthenticated => _client.currentUser != null;
 
   /// Signs up with email and password, setting the initial display name.
   Future<UserCredential> signUpWithEmailPassword({
@@ -18,7 +20,7 @@ class AuthService {
     required String password,
     String? displayName,
   }) async {
-    final credential = await _auth.createUserWithEmailAndPassword(
+    final credential = await _client.createUserWithEmailAndPassword(
       email: email.trim(),
       password: password,
     );
@@ -35,7 +37,7 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    return await _auth.signInWithEmailAndPassword(
+    return await _client.signInWithEmailAndPassword(
       email: email.trim(),
       password: password,
     );
@@ -43,19 +45,19 @@ class AuthService {
 
   /// Signs out the current user session.
   Future<void> signOut() async {
-    await _auth.signOut();
+    await _client.signOut();
   }
 
   /// Fetches fresh Firebase ID Token for authenticated API calls.
   Future<String?> getIdToken({bool forceRefresh = false}) async {
-    final user = _auth.currentUser;
+    final user = _client.currentUser;
     if (user == null) return null;
     return await user.getIdToken(forceRefresh);
   }
 
   /// Inspects decoded token custom claims to check if the caller has admin privileges.
   Future<bool> checkIsAdmin({bool forceRefresh = false}) async {
-    final user = _auth.currentUser;
+    final user = _client.currentUser;
     if (user == null) return false;
 
     final idTokenResult = await user.getIdTokenResult(forceRefresh);
@@ -67,7 +69,7 @@ class AuthService {
 
   /// Reloads user to check email verification or claim updates.
   Future<void> reloadUser() async {
-    final user = _auth.currentUser;
+    final user = _client.currentUser;
     if (user != null) {
       await user.reload();
     }

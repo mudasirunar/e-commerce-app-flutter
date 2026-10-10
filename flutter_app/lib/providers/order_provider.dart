@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/order.dart';
+import '../services/api/api_exception.dart';
+import '../services/api/order_api_service.dart';
 import '../services/firestore/firestore_service.dart';
 
 /// Provider managing customer order history, detail views, and realtime status updates.
 class OrderProvider extends ChangeNotifier {
   final FirestoreService _firestoreService;
+  final OrderApiService? _orderApiService;
   String? _userId;
 
   List<OrderModel> _orders = [];
@@ -14,7 +17,7 @@ class OrderProvider extends ChangeNotifier {
 
   StreamSubscription<List<OrderModel>>? _ordersSub;
 
-  OrderProvider(this._firestoreService);
+  OrderProvider(this._firestoreService, [this._orderApiService]);
 
   List<OrderModel> get orders => _orders;
   bool get isLoading => _isLoading;
@@ -53,10 +56,34 @@ class OrderProvider extends ChangeNotifier {
   }
 
   OrderModel? getOrderById(String orderId) {
+    for (final o in _orders) {
+      if (o.orderId == orderId) return o;
+    }
+    return null;
+  }
+
+  /// Cancels an eligible Pending order via backend API and restores inventory.
+  Future<bool> cancelOrder(String orderId, {String? reason}) async {
+    if (_orderApiService == null) return false;
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
     try {
-      return _orders.firstWhere((o) => o.orderId == orderId);
-    } catch (_) {
-      return null;
+      await _orderApiService.cancelOrder(orderId: orderId, reason: reason);
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'Failed to cancel order.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
     }
   }
 
