@@ -48,7 +48,9 @@ export default async function handler(req, res) {
         stockQuantity: 25,
         imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80',
         isActive: true,
-        isFeatured: true
+        isFeatured: true,
+        rating: 4.8,
+        reviewCount: 142
       },
       {
         productId: 'prod_elec_02',
@@ -60,7 +62,9 @@ export default async function handler(req, res) {
         stockQuantity: 40,
         imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80',
         isActive: true,
-        isFeatured: true
+        isFeatured: true,
+        rating: 4.7,
+        reviewCount: 98
       },
       {
         productId: 'prod_elec_03',
@@ -72,7 +76,9 @@ export default async function handler(req, res) {
         stockQuantity: 50,
         imageUrl: 'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.6,
+        reviewCount: 75
       },
       {
         productId: 'prod_elec_04',
@@ -84,7 +90,9 @@ export default async function handler(req, res) {
         stockQuantity: 0, // Out of stock fixture for testing
         imageUrl: 'https://images.unsplash.com/photo-1583394838336-acd977736f90?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.8,
+        reviewCount: 54
       },
       {
         productId: 'prod_elec_05',
@@ -96,7 +104,9 @@ export default async function handler(req, res) {
         stockQuantity: 35,
         imageUrl: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.7,
+        reviewCount: 88
       },
       {
         productId: 'prod_elec_06',
@@ -108,7 +118,9 @@ export default async function handler(req, res) {
         stockQuantity: 20,
         imageUrl: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&q=80',
         isActive: true,
-        isFeatured: true
+        isFeatured: true,
+        rating: 4.9,
+        reviewCount: 165
       },
       {
         productId: 'prod_elec_07',
@@ -120,7 +132,9 @@ export default async function handler(req, res) {
         stockQuantity: 15,
         imageUrl: 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.8,
+        reviewCount: 112
       },
       {
         productId: 'prod_elec_08',
@@ -132,7 +146,9 @@ export default async function handler(req, res) {
         stockQuantity: 45,
         imageUrl: 'https://images.unsplash.com/photo-1609091839311-d5365f9ff1c5?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.7,
+        reviewCount: 130
       },
 
       // ==========================================
@@ -148,7 +164,9 @@ export default async function handler(req, res) {
         stockQuantity: 35,
         imageUrl: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&q=80',
         isActive: true,
-        isFeatured: true
+        isFeatured: true,
+        rating: 4.8,
+        reviewCount: 120
       },
       {
         productId: 'prod_cloth_02',
@@ -160,7 +178,9 @@ export default async function handler(req, res) {
         stockQuantity: 20,
         imageUrl: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.7,
+        reviewCount: 85
       },
       {
         productId: 'prod_cloth_03',
@@ -172,7 +192,9 @@ export default async function handler(req, res) {
         stockQuantity: 45,
         imageUrl: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.6,
+        reviewCount: 64
       },
       {
         productId: 'prod_cloth_04',
@@ -184,7 +206,9 @@ export default async function handler(req, res) {
         stockQuantity: 30,
         imageUrl: 'https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.9,
+        reviewCount: 140
       },
       {
         productId: 'prod_cloth_05',
@@ -196,7 +220,9 @@ export default async function handler(req, res) {
         stockQuantity: 25,
         imageUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80',
         isActive: true,
-        isFeatured: true
+        isFeatured: true,
+        rating: 4.8,
+        reviewCount: 175
       },
       {
         productId: 'prod_cloth_06',
@@ -208,7 +234,9 @@ export default async function handler(req, res) {
         stockQuantity: 40,
         imageUrl: 'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.7,
+        reviewCount: 92
       },
       {
         productId: 'prod_cloth_07',
@@ -220,7 +248,9 @@ export default async function handler(req, res) {
         stockQuantity: 30,
         imageUrl: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.8,
+        reviewCount: 108
       },
       {
         productId: 'prod_cloth_08',
@@ -232,7 +262,9 @@ export default async function handler(req, res) {
         stockQuantity: 50,
         imageUrl: 'https://images.unsplash.com/photo-1624222247344-550fb60583dc?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.9,
+        reviewCount: 154
       },
 
       // ==========================================
@@ -248,7 +280,9 @@ export default async function handler(req, res) {
         stockQuantity: 25,
         imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&q=80',
         isActive: true,
-        isFeatured: true
+        isFeatured: true,
+        rating: 4.7,
+        reviewCount: 111
       },
       {
         productId: 'prod_home_02',
@@ -260,7 +294,9 @@ export default async function handler(req, res) {
         stockQuantity: 15,
         imageUrl: 'https://images.unsplash.com/photo-1610701596007-11502861dcfa?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.8,
+        reviewCount: 96
       },
       {
         productId: 'prod_home_03',
@@ -272,7 +308,9 @@ export default async function handler(req, res) {
         stockQuantity: 30,
         imageUrl: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.6,
+        reviewCount: 82
       },
       {
         productId: 'prod_home_04',
@@ -284,7 +322,9 @@ export default async function handler(req, res) {
         stockQuantity: 50,
         imageUrl: 'https://images.unsplash.com/photo-1590794056226-79ef3a8147e1?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.7,
+        reviewCount: 74
       },
       {
         productId: 'prod_home_05',
@@ -296,7 +336,9 @@ export default async function handler(req, res) {
         stockQuantity: 40,
         imageUrl: 'https://images.unsplash.com/photo-1517256064527-09c73fc73e38?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.8,
+        reviewCount: 125
       },
       {
         productId: 'prod_home_06',
@@ -308,7 +350,9 @@ export default async function handler(req, res) {
         stockQuantity: 20,
         imageUrl: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.9,
+        reviewCount: 160
       },
       {
         productId: 'prod_home_07',
@@ -320,7 +364,9 @@ export default async function handler(req, res) {
         stockQuantity: 18,
         imageUrl: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&q=80',
         isActive: true,
-        isFeatured: true
+        isFeatured: true,
+        rating: 4.8,
+        reviewCount: 126
       },
 
       // ==========================================
@@ -336,7 +382,9 @@ export default async function handler(req, res) {
         stockQuantity: 60,
         imageUrl: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&q=80',
         isActive: true,
-        isFeatured: true
+        isFeatured: true,
+        rating: 4.9,
+        reviewCount: 182
       },
       {
         productId: 'prod_care_02',
@@ -348,7 +396,9 @@ export default async function handler(req, res) {
         stockQuantity: 35,
         imageUrl: 'https://images.unsplash.com/photo-1553545985-1e0d8781d5db?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.8,
+        reviewCount: 140
       },
       {
         productId: 'prod_care_03',
@@ -360,7 +410,9 @@ export default async function handler(req, res) {
         stockQuantity: 40,
         imageUrl: 'https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.7,
+        reviewCount: 95
       },
       {
         productId: 'prod_care_04',
@@ -372,7 +424,9 @@ export default async function handler(req, res) {
         stockQuantity: 20,
         imageUrl: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.8,
+        reviewCount: 68
       },
       {
         productId: 'prod_care_05',
@@ -384,7 +438,9 @@ export default async function handler(req, res) {
         stockQuantity: 50,
         imageUrl: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&q=80',
         isActive: true,
-        isFeatured: true
+        isFeatured: true,
+        rating: 4.9,
+        reviewCount: 150
       },
       {
         productId: 'prod_care_06',
@@ -396,7 +452,9 @@ export default async function handler(req, res) {
         stockQuantity: 45,
         imageUrl: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.7,
+        reviewCount: 84
       },
       {
         productId: 'prod_care_07',
@@ -408,7 +466,9 @@ export default async function handler(req, res) {
         stockQuantity: 35,
         imageUrl: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800&q=80',
         isActive: true,
-        isFeatured: false
+        isFeatured: false,
+        rating: 4.8,
+        reviewCount: 104
       }
     ];
 

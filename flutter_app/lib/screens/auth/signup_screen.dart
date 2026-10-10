@@ -137,7 +137,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     CustomTextField(
                       controller: _nameController,
                       label: 'Full Name',
-                      hint: 'Mudasir Unar',
+                      hint: 'Ali Khan',
                       prefixIcon: Icons.person_outline_rounded,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {

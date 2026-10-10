@@ -16,6 +16,8 @@ class Product {
   final int stockQuantity;
   final bool isActive;
   final bool isFeatured;
+  final double rating;
+  final int reviewCount;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -30,6 +32,8 @@ class Product {
     required this.stockQuantity,
     this.isActive = true,
     this.isFeatured = false,
+    this.rating = 4.8,
+    this.reviewCount = 96,
     this.createdAt,
     this.updatedAt,
   });
@@ -62,6 +66,8 @@ class Product {
       stockQuantity: (data['stockQuantity'] as num?)?.toInt() ?? 0,
       isActive: (data['isActive'] as bool?) ?? true,
       isFeatured: (data['isFeatured'] as bool?) ?? false,
+      rating: (data['rating'] as num?)?.toDouble() ?? 4.8,
+      reviewCount: (data['reviewCount'] as num?)?.toInt() ?? 0,
       createdAt: DateFormatter.parse(data['createdAt']),
       updatedAt: DateFormatter.parse(data['updatedAt']),
     );
@@ -79,6 +85,8 @@ class Product {
       'stockQuantity': stockQuantity,
       'isActive': isActive,
       'isFeatured': isFeatured,
+      'rating': rating,
+      'reviewCount': reviewCount,
       if (createdAt != null) 'createdAt': DateFormatter.toSerializable(createdAt),
       if (updatedAt != null) 'updatedAt': DateFormatter.toSerializable(updatedAt),
     };

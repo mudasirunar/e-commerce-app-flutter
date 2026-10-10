@@ -131,7 +131,7 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppTheme.space16),
                     const Text(
-                      'Welcome to Boutique Luxury',
+                      'Welcome to E-Commerce App',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: AppTheme.space8),

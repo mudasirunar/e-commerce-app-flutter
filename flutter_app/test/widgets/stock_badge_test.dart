@@ -40,11 +40,23 @@ void main() {
       expect(find.text('Only 3 left'), findsOneWidget);
     });
 
-    testWidgets('displays "In Stock" when stock is healthy (> 5)', (tester) async {
+    testWidgets('hides in-stock pill by default when stock is healthy (> 5)', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: StockBadge(product: makeProduct(stock: 20)),
+          ),
+        ),
+      );
+
+      expect(find.text('In Stock'), findsNothing);
+    });
+
+    testWidgets('displays "In Stock" when showInStock is true', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: StockBadge(product: makeProduct(stock: 20), showInStock: true),
           ),
         ),
       );

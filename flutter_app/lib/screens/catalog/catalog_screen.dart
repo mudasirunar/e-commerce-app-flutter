@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../models/category.dart';
 import '../../providers/catalog_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/catalog/product_card.dart';
@@ -217,15 +218,20 @@ class _CatalogScreenState extends State<CatalogScreen> {
                             padding: const EdgeInsets.all(AppTheme.space16),
                             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 2,
-                              childAspectRatio: 0.68,
+                              childAspectRatio: 0.65,
                               crossAxisSpacing: AppTheme.space12,
                               mainAxisSpacing: AppTheme.space12,
                             ),
                             itemCount: products.length,
                             itemBuilder: (context, index) {
                               final product = products[index];
+                              final category = catalog.categories.firstWhere(
+                                (c) => c.categoryId == product.categoryId,
+                                orElse: () => const Category(categoryId: '', name: ''),
+                              );
                               return ProductCard(
                                 product: product,
+                                categoryName: category.name.isNotEmpty ? category.name : null,
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(

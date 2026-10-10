@@ -73,6 +73,8 @@ export default async function handler(req, res) {
         imageUrl: (imageUrl || '').trim(),
         isActive: true,
         isFeatured: !!isFeatured,
+        rating: data.rating !== undefined ? parseFloat(data.rating) : 4.8,
+        reviewCount: data.reviewCount !== undefined ? parseInt(data.reviewCount, 10) : 96,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       };
@@ -176,6 +178,14 @@ export default async function handler(req, res) {
           return res.status(400).json({ error: 'priceMinor must be a positive integer.' });
         }
         updates.priceMinor = price;
+      }
+      if (data.rating !== undefined) {
+        const rating = parseFloat(data.rating);
+        if (!isNaN(rating)) updates.rating = rating;
+      }
+      if (data.reviewCount !== undefined) {
+        const reviewCount = parseInt(data.reviewCount, 10);
+        if (!isNaN(reviewCount)) updates.reviewCount = reviewCount;
       }
       if (data.stockQuantity !== undefined) {
         const stock = parseInt(data.stockQuantity, 10);

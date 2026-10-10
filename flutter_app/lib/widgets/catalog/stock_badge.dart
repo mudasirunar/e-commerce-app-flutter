@@ -3,10 +3,16 @@ import '../../models/product.dart';
 import '../../theme/app_theme.dart';
 
 /// Pill badge indicating product availability.
+/// By default, normal in-stock products do not render redundant pills.
 class StockBadge extends StatelessWidget {
   final Product product;
+  final bool showInStock;
 
-  const StockBadge({super.key, required this.product});
+  const StockBadge({
+    super.key,
+    required this.product,
+    this.showInStock = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -26,11 +32,15 @@ class StockBadge extends StatelessWidget {
       );
     }
 
-    return _buildPill(
-      label: 'In Stock',
-      bgColor: const Color(0xFFDCFCE7),
-      textColor: const Color(0xFF166534),
-    );
+    if (showInStock) {
+      return _buildPill(
+        label: 'In Stock',
+        bgColor: const Color(0xFFDCFCE7),
+        textColor: const Color(0xFF166534),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 
   Widget _buildPill({

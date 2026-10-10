@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/category.dart';
+import '../../providers/cart_provider.dart';
 import '../../providers/catalog_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/catalog/product_card.dart';
 import '../../widgets/common/state_views.dart';
+import '../cart/cart_screen.dart';
 import '../catalog/catalog_screen.dart';
 import '../catalog/product_detail_screen.dart';
 
@@ -20,10 +22,11 @@ class HomeScreen extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final catalog = context.watch<CatalogProvider>();
+    final cart = context.watch<CartProvider>();
 
     if (catalog.isLoading) {
       return const Scaffold(
-        body: LoadingView(message: 'Curating boutique collection...'),
+        body: LoadingView(message: 'Loading products...'),
       );
     }
 
@@ -41,26 +44,30 @@ class HomeScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Boutique Luxury'),
+        title: const Text('E-Commerce App'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search_rounded),
+            tooltip: 'Shopping Bag',
+            icon: Badge(
+              isLabelVisible: cart.totalUnits > 0,
+              label: Text('${cart.totalUnits}'),
+              backgroundColor: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
+              textColor: isDark ? Colors.black : Colors.white,
+              child: const Icon(Icons.shopping_bag_outlined),
+            ),
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const CatalogScreen()),
+                MaterialPageRoute(builder: (_) => const CartScreen()),
               );
             },
           ),
+          const SizedBox(width: AppTheme.space8),
         ],
       ),
-      body: RefreshIndicator(
-        color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
-        onRefresh: () => catalog.refresh(),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
               // Hero Editorial Banner
               _buildHeroBanner(context, isDark),
               const SizedBox(height: AppTheme.space24),
@@ -134,15 +141,20 @@ class HomeScreen extends StatelessWidget {
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      childAspectRatio: 0.68,
+                      childAspectRatio: 0.65,
                       crossAxisSpacing: AppTheme.space12,
                       mainAxisSpacing: AppTheme.space12,
                     ),
                     itemCount: newArrivals.length,
                     itemBuilder: (context, index) {
                       final product = newArrivals[index];
+                      final category = catalog.categories.firstWhere(
+                        (c) => c.categoryId == product.categoryId,
+                        orElse: () => const Category(categoryId: '', name: ''),
+                      );
                       return ProductCard(
                         product: product,
+                        categoryName: category.name.isNotEmpty ? category.name : null,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -159,7 +171,6 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 
