@@ -154,6 +154,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   return ChoiceChip(
                     label: const Text('All Pieces'),
                     selected: isSelected,
+                    showCheckmark: false,
                     onSelected: (_) => catalog.setCategory(null),
                   );
                 }
@@ -162,6 +163,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 return ChoiceChip(
                   label: Text(category.name),
                   selected: isSelected,
+                  showCheckmark: false,
                   onSelected: (_) => catalog.setCategory(category.categoryId),
                 );
               },

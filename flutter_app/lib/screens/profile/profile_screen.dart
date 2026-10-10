@@ -167,8 +167,6 @@ class ProfileScreen extends StatelessWidget {
                 color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
               ),
             ),
-            const SizedBox(height: AppTheme.space12),
-
             Container(
               padding: const EdgeInsets.all(AppTheme.space16),
               decoration: BoxDecoration(
@@ -180,21 +178,65 @@ class ProfileScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SegmentedButton<ThemeMode>(
-                    segments: const [
+                    showSelectedIcon: false,
+                    segments: [
                       ButtonSegment(
                         value: ThemeMode.system,
-                        label: Text('System'),
-                        icon: Icon(Icons.brightness_auto_outlined, size: 18),
+                        label: const Text('System'),
+                        icon: AnimatedScale(
+                          scale: themeProvider.themeMode == ThemeMode.system ? 1.25 : 1.0,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutBack,
+                          child: Icon(
+                            Icons.brightness_auto_rounded,
+                            size: 19,
+                            color: themeProvider.themeMode == ThemeMode.system
+                                ? (isDark ? const Color(0xFF60A5FA) : const Color(0xFF2563EB))
+                                : (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
+                          ),
+                        ),
                       ),
                       ButtonSegment(
                         value: ThemeMode.light,
-                        label: Text('Light'),
-                        icon: Icon(Icons.wb_sunny_outlined, size: 18),
+                        label: const Text('Light'),
+                        icon: AnimatedRotation(
+                          turns: themeProvider.themeMode == ThemeMode.light ? 0.125 : 0.0,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutBack,
+                          child: AnimatedScale(
+                            scale: themeProvider.themeMode == ThemeMode.light ? 1.25 : 1.0,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOutBack,
+                            child: Icon(
+                              Icons.wb_sunny_rounded,
+                              size: 19,
+                              color: themeProvider.themeMode == ThemeMode.light
+                                  ? const Color(0xFFF59E0B)
+                                  : (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
+                            ),
+                          ),
+                        ),
                       ),
                       ButtonSegment(
                         value: ThemeMode.dark,
-                        label: Text('Dark'),
-                        icon: Icon(Icons.nightlight_outlined, size: 18),
+                        label: const Text('Dark'),
+                        icon: AnimatedRotation(
+                          turns: themeProvider.themeMode == ThemeMode.dark ? -0.06 : 0.0,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutBack,
+                          child: AnimatedScale(
+                            scale: themeProvider.themeMode == ThemeMode.dark ? 1.25 : 1.0,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOutBack,
+                            child: Icon(
+                              Icons.nightlight_round,
+                              size: 19,
+                              color: themeProvider.themeMode == ThemeMode.dark
+                                  ? const Color(0xFFA78BFA)
+                                  : (isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary),
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                     selected: {themeProvider.themeMode},
@@ -440,3 +482,4 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
+
