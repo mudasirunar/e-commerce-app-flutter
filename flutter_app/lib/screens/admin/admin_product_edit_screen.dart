@@ -186,7 +186,7 @@ class _AdminProductEditScreenState extends State<AdminProductEditScreen> {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: Text(
-                'Visible in Boutique Catalog',
+                'Visible in Store Catalog',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,

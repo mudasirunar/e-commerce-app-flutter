@@ -6,6 +6,7 @@ import '../../providers/cart_provider.dart';
 import '../../providers/catalog_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/catalog/stock_badge.dart';
+import '../../widgets/common/app_confirmation_dialog.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/quantity_stepper.dart';
 import '../auth/login_screen.dart';
@@ -214,22 +215,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Future<void> _handleAddToCart(Product product) async {
     final auth = context.read<AuthProvider>();
     if (!auth.isAuthenticated) {
-      final shouldSignIn = await showDialog<bool>(
+      final shouldSignIn = await AppConfirmationDialog.show(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Sign In Required'),
-          content: const Text('Please sign in to add boutique items to your shopping bag.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Sign In'),
-            ),
-          ],
-        ),
+        title: 'Sign In Required',
+        message: 'Please sign in to add items to your shopping bag.',
+        icon: Icons.shopping_bag_outlined,
+        confirmLabel: 'Sign In',
+        cancelLabel: 'Cancel',
       );
 
       if (shouldSignIn == true && mounted) {
@@ -285,7 +277,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           const SizedBox(height: AppTheme.space8),
           Text(
-            'Boutique Item',
+            'Product Preview',
             style: TextStyle(
               fontSize: 12,
               color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,

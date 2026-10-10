@@ -3,7 +3,7 @@ import '../../theme/app_theme.dart';
 
 enum ButtonVariant { primary, secondary, text }
 
-/// Reusable boutique button supporting primary (terracotta), secondary (outlined),
+/// Reusable styled button supporting primary (terracotta), secondary (outlined),
 /// and text variants with loading state and accessible touch targets.
 class CustomButton extends StatelessWidget {
   final String text;

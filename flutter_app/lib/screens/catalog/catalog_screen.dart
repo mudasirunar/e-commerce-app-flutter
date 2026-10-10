@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../models/category.dart';
 import '../../providers/catalog_provider.dart';
 import '../../theme/app_theme.dart';
@@ -46,24 +47,33 @@ class _CatalogScreenState extends State<CatalogScreen> {
       context: context,
       backgroundColor: isDark ? AppTheme.darkSurface : AppTheme.lightSurface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppTheme.radiusLarge)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppTheme.radiusLarge),
+        ),
       ),
       builder: (ctx) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppTheme.space24, horizontal: AppTheme.space16),
+            padding: const EdgeInsets.symmetric(
+              vertical: AppTheme.space24,
+              horizontal: AppTheme.space16,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppTheme.space8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.space8,
+                  ),
                   child: Text(
                     'Sort Collection',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                      color: isDark
+                          ? AppTheme.darkTextPrimary
+                          : AppTheme.lightTextPrimary,
                     ),
                   ),
                 ),
@@ -74,16 +84,24 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     title: Text(
                       option.label,
                       style: TextStyle(
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
                         color: isSelected
-                            ? (isDark ? AppTheme.darkAccent : AppTheme.lightAccent)
-                            : (isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary),
+                            ? (isDark
+                                  ? AppTheme.darkAccent
+                                  : AppTheme.lightAccent)
+                            : (isDark
+                                  ? AppTheme.darkTextPrimary
+                                  : AppTheme.lightTextPrimary),
                       ),
                     ),
                     trailing: isSelected
                         ? Icon(
                             Icons.check_rounded,
-                            color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
+                            color: isDark
+                                ? AppTheme.darkAccent
+                                : AppTheme.lightAccent,
                           )
                         : null,
                     onTap: () {
@@ -122,7 +140,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
         children: [
           // Search & Filter header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppTheme.space16, vertical: AppTheme.space8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.space16,
+              vertical: AppTheme.space8,
+            ),
             child: CustomTextField(
               controller: _searchController,
               hint: 'Search furniture, decor, lighting...',
@@ -147,7 +168,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppTheme.space16),
               itemCount: catalog.categories.length + 1,
-              separatorBuilder: (context, index) => const SizedBox(width: AppTheme.space8),
+              separatorBuilder: (context, index) =>
+                  const SizedBox(width: AppTheme.space8),
               itemBuilder: (context, index) {
                 if (index == 0) {
                   final isSelected = catalog.selectedCategoryId == null;
@@ -159,7 +181,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   );
                 }
                 final category = catalog.categories[index - 1];
-                final isSelected = catalog.selectedCategoryId == category.categoryId;
+                final isSelected =
+                    catalog.selectedCategoryId == category.categoryId;
                 return ChoiceChip(
                   label: Text(category.name),
                   selected: isSelected,
@@ -172,7 +195,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
           // Results count indicator
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppTheme.space16, vertical: AppTheme.space8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.space16,
+              vertical: AppTheme.space8,
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -181,7 +207,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                    color: isDark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
                   ),
                 ),
                 Text(
@@ -201,49 +229,53 @@ class _CatalogScreenState extends State<CatalogScreen> {
             child: catalog.isLoading
                 ? const LoadingView(message: 'Loading collection...')
                 : catalog.errorMessage != null
-                    ? ErrorView(
-                        message: catalog.errorMessage!,
-                        onRetry: () => catalog.refresh(),
-                      )
-                    : products.isEmpty
-                        ? EmptyView(
-                            icon: Icons.search_off_rounded,
-                            title: 'No Items Found',
-                            subtitle: 'Try adjusting your search keywords or category filters.',
-                            actionText: 'Reset Filters',
-                            onAction: () {
-                              _searchController.clear();
-                              catalog.resetFilters();
-                            },
-                          )
-                        : GridView.builder(
-                            padding: const EdgeInsets.all(AppTheme.space16),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.65,
-                              crossAxisSpacing: AppTheme.space12,
-                              mainAxisSpacing: AppTheme.space12,
+                ? ErrorView(
+                    message: catalog.errorMessage!,
+                    onRetry: () => catalog.refresh(),
+                  )
+                : products.isEmpty
+                ? EmptyView(
+                    icon: Icons.search_off_rounded,
+                    title: 'No Items Found',
+                    subtitle: 'Try adjusting your search keywords or category filters.',
+                    actionText: 'Reset Filters',
+                    onAction: () {
+                      _searchController.clear();
+                      catalog.resetFilters();
+                    },
+                  )
+                : GridView.builder(
+                    padding: const EdgeInsets.all(AppTheme.space16),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.65,
+                          crossAxisSpacing: AppTheme.space12,
+                          mainAxisSpacing: AppTheme.space12,
+                        ),
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      final product = products[index];
+                      final category = catalog.categories.firstWhere(
+                        (c) => c.categoryId == product.categoryId,
+                        orElse: () => const Category(categoryId: '', name: ''),
+                      );
+                      return ProductCard(
+                        product: product,
+                        categoryName: category.name.isNotEmpty
+                            ? category.name
+                            : null,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  ProductDetailScreen(product: product),
                             ),
-                            itemCount: products.length,
-                            itemBuilder: (context, index) {
-                              final product = products[index];
-                              final category = catalog.categories.firstWhere(
-                                (c) => c.categoryId == product.categoryId,
-                                orElse: () => const Category(categoryId: '', name: ''),
-                              );
-                              return ProductCard(
-                                product: product,
-                                categoryName: category.name.isNotEmpty ? category.name : null,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => ProductDetailScreen(product: product),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
+                          );
+                        },
+                      );
+                    },
+                  ),
           ),
         ],
       ),

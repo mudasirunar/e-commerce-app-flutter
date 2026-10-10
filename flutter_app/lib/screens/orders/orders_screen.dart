@@ -80,8 +80,8 @@ class OrdersScreen extends StatelessWidget {
                       ? EmptyView(
                           icon: Icons.receipt_long_outlined,
                           title: 'No Orders Yet',
-                          subtitle: 'You have not placed any boutique orders yet.',
-                          actionText: 'Explore Gallery',
+                          subtitle: 'You have not placed any orders yet.',
+                          actionText: 'Start Shopping',
                           onAction: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(builder: (_) => const CatalogScreen()),

@@ -28,7 +28,7 @@ void main() {
             body: EmptyView(
               icon: Icons.shopping_bag_outlined,
               title: 'Your cart is empty',
-              subtitle: 'Discover our curated boutique pieces.',
+              subtitle: 'Discover our curated collection.',
               actionText: 'Explore Catalog',
               onAction: () => actionTriggered = true,
             ),
@@ -37,7 +37,7 @@ void main() {
       );
 
       expect(find.text('Your cart is empty'), findsOneWidget);
-      expect(find.text('Discover our curated boutique pieces.'), findsOneWidget);
+      expect(find.text('Discover our curated collection.'), findsOneWidget);
       expect(find.text('Explore Catalog'), findsOneWidget);
 
       await tester.tap(find.text('Explore Catalog'));

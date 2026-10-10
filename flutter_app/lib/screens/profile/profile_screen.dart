@@ -4,6 +4,7 @@ import '../../models/delivery_info.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/common/app_confirmation_dialog.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../admin/admin_dashboard_screen.dart';
@@ -402,84 +403,161 @@ class ProfileScreen extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(current == null ? 'Add Default Address' : 'Edit Default Address'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CustomTextField(
-                controller: nameCtrl,
-                label: 'Recipient Name',
-                hint: 'Full Name',
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        final isDark = theme.brightness == Brightness.dark;
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.location_on_outlined,
+                        size: 28,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Text(
+                    current == null ? 'Add Delivery Address' : 'Edit Delivery Address',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 19,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  CustomTextField(
+                    controller: nameCtrl,
+                    label: 'Recipient Name',
+                    hint: 'Full Name',
+                  ),
+                  const SizedBox(height: AppTheme.space12),
+                  CustomTextField(
+                    controller: phoneCtrl,
+                    label: 'Mobile Phone',
+                    hint: '03001234567',
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: AppTheme.space12),
+                  CustomTextField(
+                    controller: addressCtrl,
+                    label: 'Detailed Address',
+                    hint: 'House, Street, Area',
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 46,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.of(ctx).pop(),
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size(0, 46),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              side: BorderSide(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.18)
+                                    : const Color(0xFFD6D3D1),
+                                width: 1.2,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white70 : const Color(0xFF44403C),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 46,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final newInfo = DeliveryInfo(
+                                fullName: nameCtrl.text.trim(),
+                                phone: phoneCtrl.text.trim(),
+                                address: addressCtrl.text.trim(),
+                                city: city,
+                              );
+                              if (newInfo.isValid) {
+                                final auth = context.read<AuthProvider>();
+                                await auth.updateDeliveryProfile(
+                                  defaultDeliveryInfo: newInfo,
+                                );
+                                if (ctx.mounted) Navigator.of(ctx).pop();
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(0, 46),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              backgroundColor: theme.colorScheme.primary,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Save',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: AppTheme.space12),
-              CustomTextField(
-                controller: phoneCtrl,
-                label: 'Mobile Phone',
-                hint: '03001234567',
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: AppTheme.space12),
-              CustomTextField(
-                controller: addressCtrl,
-                label: 'Detailed Address',
-                hint: 'House, Street, Area',
-                maxLines: 2,
-              ),
-            ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final newInfo = DeliveryInfo(
-                fullName: nameCtrl.text.trim(),
-                phone: phoneCtrl.text.trim(),
-                address: addressCtrl.text.trim(),
-                city: city,
-              );
-              if (newInfo.isValid) {
-                final auth = context.read<AuthProvider>();
-                await auth.updateDeliveryProfile(
-                  defaultDeliveryInfo: newInfo,
-                );
-                if (ctx.mounted) Navigator.of(ctx).pop();
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  void _handleSignOut(BuildContext context, AuthProvider auth) {
-    showDialog(
+  Future<void> _handleSignOut(BuildContext context, AuthProvider auth) async {
+    final confirmed = await AppConfirmationDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Sign Out?'),
-        content: const Text('Are you sure you want to sign out from your account?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            onPressed: () {
-              auth.signOut();
-              Navigator.of(ctx).pop();
-            },
-            child: const Text('Sign Out'),
-          ),
-        ],
-      ),
+      title: 'Sign Out?',
+      message: 'Are you sure you want to sign out from your account?',
+      icon: Icons.logout_rounded,
+      confirmLabel: 'Sign Out',
+      cancelLabel: 'Cancel',
+      isDestructive: true,
     );
+
+    if (confirmed == true) {
+      auth.signOut();
+    }
   }
 }
 

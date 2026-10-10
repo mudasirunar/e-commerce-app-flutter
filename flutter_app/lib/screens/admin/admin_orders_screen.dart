@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/order.dart';
 import '../../providers/admin_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/common/app_confirmation_dialog.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/orders/order_status_badge.dart';
 
@@ -44,24 +45,14 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   }
 
   Future<void> _handleStatusChange(OrderModel order, String newStatus) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await AppConfirmationDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Update to $newStatus?'),
-        content: Text(
+      title: 'Update to $newStatus?',
+      message:
           'Are you sure you want to transition Order #${order.orderId.substring(0, 8).toUpperCase()} from ${order.status.value} to $newStatus?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
+      icon: Icons.sync_alt_rounded,
+      confirmLabel: 'Confirm',
+      cancelLabel: 'Cancel',
     );
 
     if (confirmed == true && mounted) {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Design tokens and ThemeData definitions for Palette 2: Warm Earth & Terracotta (Boutique Luxury).
+/// Design tokens and ThemeData definitions for Palette 2: Warm Earth & Terracotta.
 class AppTheme {
   const AppTheme._();
 

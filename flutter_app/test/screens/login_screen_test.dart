@@ -71,14 +71,14 @@ void main() {
       expect(find.byType(TextFormField), findsNWidgets(2));
 
       // Enter valid email and password
-      await tester.enterText(find.byType(TextFormField).first, 'customer@boutique.pk');
+      await tester.enterText(find.byType(TextFormField).first, 'customer@example.com');
       await tester.enterText(find.byType(TextFormField).last, 'secret123');
       await tester.pumpAndSettle();
 
       await tester.tap(find.widgetWithText(CustomButton, 'Sign In'));
       await tester.pumpAndSettle();
 
-      expect(fakeAuth.submittedEmail, equals('customer@boutique.pk'));
+      expect(fakeAuth.submittedEmail, equals('customer@example.com'));
       expect(fakeAuth.submittedPassword, equals('secret123'));
     });
 

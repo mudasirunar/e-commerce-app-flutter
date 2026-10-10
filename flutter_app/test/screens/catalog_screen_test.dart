@@ -77,7 +77,7 @@ void main() {
         ),
       );
 
-      expect(find.text('Boutique Catalog'), findsOneWidget);
+      expect(find.text('Catalog'), findsOneWidget);
       expect(find.text('All Pieces'), findsOneWidget);
       expect(find.text('Living Room'), findsOneWidget);
       expect(find.text('Dining Room'), findsOneWidget);

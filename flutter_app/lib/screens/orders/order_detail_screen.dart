@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../models/order.dart';
 import '../../providers/order_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/common/app_confirmation_dialog.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/orders/order_status_badge.dart';
 
@@ -20,25 +21,15 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   bool _isCancelling = false;
 
   Future<void> _handleCancelOrder(OrderModel liveOrder) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await AppConfirmationDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Cancel Order?'),
-        content: Text(
-          'Are you sure you want to cancel Order #${liveOrder.orderId.substring(0, 8).toUpperCase()}?\n\nReserved items will be restored to boutique inventory immediately.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Keep Order'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Confirm Cancellation'),
-          ),
-        ],
-      ),
+      title: 'Cancel Order?',
+      message:
+          'Are you sure you want to cancel Order #${liveOrder.orderId.substring(0, 8).toUpperCase()}?\n\nReserved items will be restored to store inventory immediately.',
+      icon: Icons.cancel_outlined,
+      confirmLabel: 'Confirm Cancellation',
+      cancelLabel: 'Keep Order',
+      isDestructive: true,
     );
 
     if (confirmed == true && mounted) {

@@ -8,7 +8,7 @@ import '../../screens/cart/cart_screen.dart';
 import '../../theme/app_theme.dart';
 import 'stock_badge.dart';
 
-/// Boutique luxury product card designed for grid and list browsing.
+/// Product card designed for grid and list browsing.
 class ProductCard extends StatelessWidget {
   final Product product;
   final String? categoryName;

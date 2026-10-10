@@ -4,6 +4,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/cart/cart_item_tile.dart';
+import '../../widgets/common/app_confirmation_dialog.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/state_views.dart';
 import '../auth/login_screen.dart';
@@ -84,7 +85,7 @@ class CartScreen extends StatelessWidget {
                   ? EmptyView(
                       icon: Icons.shopping_bag_outlined,
                       title: 'Your Bag is Empty',
-                      subtitle: 'Explore our curated boutique collection to find handcrafted furniture and decor.',
+                      subtitle: 'Explore our curated collection to find handcrafted furniture and decor.',
                       actionText: 'Explore Collection',
                       onAction: () {
                         Navigator.of(context).push(
@@ -260,27 +261,19 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  void _confirmClearCart(BuildContext context, CartProvider cart) {
-    showDialog(
+  Future<void> _confirmClearCart(BuildContext context, CartProvider cart) async {
+    final confirmed = await AppConfirmationDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Clear Shopping Bag?'),
-        content: const Text('Are you sure you want to remove all items from your bag?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            onPressed: () {
-              cart.clearCart();
-              Navigator.of(ctx).pop();
-            },
-            child: const Text('Clear Bag'),
-          ),
-        ],
-      ),
+      title: 'Clear Shopping Bag?',
+      message: 'Are you sure you want to remove all items from your bag?',
+      icon: Icons.delete_outline_rounded,
+      confirmLabel: 'Clear Bag',
+      cancelLabel: 'Cancel',
+      isDestructive: true,
     );
+
+    if (confirmed == true) {
+      cart.clearCart();
+    }
   }
 }
