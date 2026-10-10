@@ -1,6 +1,6 @@
 # e commerce app
 
-Android and iOS e-commerce project for **ANAS Technologies — Flutter Internship, Task 08**. The project specification covers customer shopping, catalog administration, persistent data and secure order handling using Flutter and Firebase, with Brevo for transactional email.
+Android and iOS e-commerce project. The project specification covers customer shopping, catalog administration, persistent data and secure order handling using Flutter and Firebase, with Brevo for transactional email.
 
 Checkout is a **demo / Cash on Delivery simulation**. No real payment is collected.
 
