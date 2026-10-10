@@ -166,7 +166,7 @@ class HomeScreen extends StatelessWidget {
                     },
                   ),
                 ),
-                const SizedBox(height: AppTheme.space32),
+                const SizedBox(height: AppTheme.space16),
               ],
             ],
           ),

@@ -7,6 +7,7 @@ import '../../widgets/cart/cart_item_tile.dart';
 import '../../widgets/common/app_confirmation_dialog.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/state_views.dart';
+import '../../widgets/navigation/app_navigation_shell.dart';
 import '../auth/login_screen.dart';
 import '../catalog/catalog_screen.dart';
 import '../checkout/checkout_screen.dart';
@@ -152,9 +153,16 @@ class CartScreen extends StatelessWidget {
 
   Widget _buildCartSummary(BuildContext context, CartProvider cart, bool isDark) {
     final canCheckout = !cart.isEmpty && !cart.hasStockErrors && !cart.hasUnavailableItems;
+    final hasBottomBar = ShellNavigationScope.hasBottomBarOf(context);
+    final bottomPadding = hasBottomBar ? 80.0 : AppTheme.space20;
 
     return Container(
-      padding: const EdgeInsets.all(AppTheme.space20),
+      padding: EdgeInsets.fromLTRB(
+        AppTheme.space20,
+        AppTheme.space20,
+        AppTheme.space20,
+        bottomPadding,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
         border: Border(

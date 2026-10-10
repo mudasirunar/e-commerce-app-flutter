@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/catalog/product_card.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../../widgets/common/state_views.dart';
+import '../../widgets/navigation/app_navigation_shell.dart';
 import 'product_detail_screen.dart';
 
 /// Screen displaying the full browsable product catalog with search,
@@ -151,6 +152,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
     final catalog = context.watch<CatalogProvider>();
     final products = catalog.filteredProducts;
     final selectedId = catalog.selectedCategoryId;
+    final hasBottomBar = ShellNavigationScope.hasBottomBarOf(context);
+    final bottomClearance = hasBottomBar ? 100.0 : 36.0;
 
     // Auto-scroll to center on arrival or when category filter changes
     if (!_didInitialScroll) {
@@ -291,7 +294,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     },
                   )
                 : GridView.builder(
-                    padding: const EdgeInsets.all(AppTheme.space16),
+                    padding: EdgeInsets.fromLTRB(
+                      AppTheme.space16,
+                      AppTheme.space16,
+                      AppTheme.space16,
+                      bottomClearance,
+                    ),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,

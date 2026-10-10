@@ -7,6 +7,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common/app_confirmation_dialog.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
+import '../../widgets/navigation/app_navigation_shell.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../auth/login_screen.dart';
 
@@ -22,6 +23,8 @@ class ProfileScreen extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final themeProvider = context.watch<ThemeProvider>();
     final profile = auth.profile;
+    final hasBottomBar = ShellNavigationScope.hasBottomBarOf(context);
+    final bottomClearance = hasBottomBar ? 100.0 : 36.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -303,8 +306,8 @@ class ProfileScreen extends StatelessWidget {
                 variant: ButtonVariant.secondary,
                 onPressed: () => _handleSignOut(context, auth),
               ),
-              const SizedBox(height: AppTheme.space24),
             ],
+            SizedBox(height: bottomClearance),
           ],
         ),
       ),

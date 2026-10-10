@@ -6,6 +6,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/state_views.dart';
 import '../../widgets/orders/order_card.dart';
+import '../../widgets/navigation/app_navigation_shell.dart';
 import '../auth/login_screen.dart';
 import '../catalog/catalog_screen.dart';
 import 'order_detail_screen.dart';
@@ -20,6 +21,8 @@ class OrdersScreen extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final auth = context.watch<AuthProvider>();
     final orderProvider = context.watch<OrderProvider>();
+    final hasBottomBar = ShellNavigationScope.hasBottomBarOf(context);
+    final bottomClearance = hasBottomBar ? 100.0 : 36.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -89,7 +92,12 @@ class OrdersScreen extends StatelessWidget {
                           },
                         )
                       : ListView.separated(
-                          padding: const EdgeInsets.all(AppTheme.space16),
+                          padding: EdgeInsets.fromLTRB(
+                            AppTheme.space16,
+                            AppTheme.space16,
+                            AppTheme.space16,
+                            bottomClearance,
+                          ),
                           itemCount: orderProvider.orders.length,
                           separatorBuilder: (context, index) => const SizedBox(height: AppTheme.space12),
                           itemBuilder: (context, index) {
