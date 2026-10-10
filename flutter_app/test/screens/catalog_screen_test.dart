@@ -100,5 +100,23 @@ void main() {
       expect(find.text('No Items Found'), findsOneWidget);
       expect(find.text('Reset Filters'), findsOneWidget);
     });
+
+    testWidgets('initialCategoryId selects category and centers filter tab chip', (tester) async {
+      final fakeCatalog = TestCatalogProvider();
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<CatalogProvider>.value(
+          value: fakeCatalog,
+          child: const MaterialApp(
+            home: CatalogScreen(initialCategoryId: 'cat_living'),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(fakeCatalog.selectedCategoryId, equals('cat_living'));
+      final chip = tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Living Room'));
+      expect(chip.selected, isTrue);
+    });
   });
 }

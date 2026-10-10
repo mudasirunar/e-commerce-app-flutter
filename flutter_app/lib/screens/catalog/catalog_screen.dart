@@ -22,6 +22,14 @@ class CatalogScreen extends StatefulWidget {
 
 class _CatalogScreenState extends State<CatalogScreen> {
   final _searchController = TextEditingController();
+  final _categoryScrollController = ScrollController();
+  final Map<String?, GlobalKey> _chipKeys = {};
+  String? _lastCenteredCategoryId;
+  bool _didInitialScroll = false;
+
+  GlobalKey _getChipKey(String? categoryId) {
+    return _chipKeys.putIfAbsent(categoryId, () => GlobalKey());
+  }
 
   @override
   void initState() {
@@ -36,7 +44,25 @@ class _CatalogScreenState extends State<CatalogScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _categoryScrollController.dispose();
     super.dispose();
+  }
+
+  void _scrollToCategory(String? categoryId, {bool animated = true}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final key = _chipKeys[categoryId];
+      final targetContext = key?.currentContext;
+      if (targetContext != null) {
+        Scrollable.ensureVisible(
+          targetContext,
+          alignment: 0.5,
+          duration: animated ? const Duration(milliseconds: 350) : Duration.zero,
+          curve: Curves.easeInOutCubic,
+        );
+        _lastCenteredCategoryId = categoryId;
+      }
+    });
   }
 
   void _showSortSheet(BuildContext context, CatalogProvider catalog) {
@@ -124,6 +150,21 @@ class _CatalogScreenState extends State<CatalogScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final catalog = context.watch<CatalogProvider>();
     final products = catalog.filteredProducts;
+    final selectedId = catalog.selectedCategoryId;
+
+    // Auto-scroll to center on arrival or when category filter changes
+    if (!_didInitialScroll) {
+      final targetId = widget.initialCategoryId ?? selectedId;
+      if (targetId != null) {
+        final hasTarget = catalog.categories.any((c) => c.categoryId == targetId);
+        if (hasTarget) {
+          _didInitialScroll = true;
+          _scrollToCategory(targetId, animated: true);
+        }
+      }
+    } else if (selectedId != _lastCenteredCategoryId && selectedId != null) {
+      _scrollToCategory(selectedId, animated: true);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -161,35 +202,40 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
           ),
 
-          // Categories horizontal scroll list
+          // Categories horizontal scroll list with centered auto-scroll
           SizedBox(
             height: 48,
-            child: ListView.separated(
+            child: SingleChildScrollView(
+              controller: _categoryScrollController,
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppTheme.space16),
-              itemCount: catalog.categories.length + 1,
-              separatorBuilder: (context, index) =>
-                  const SizedBox(width: AppTheme.space8),
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  final isSelected = catalog.selectedCategoryId == null;
-                  return ChoiceChip(
+              child: Row(
+                children: [
+                  ChoiceChip(
+                    key: _getChipKey(null),
                     label: const Text('All Pieces'),
-                    selected: isSelected,
+                    selected: catalog.selectedCategoryId == null,
                     showCheckmark: false,
-                    onSelected: (_) => catalog.setCategory(null),
-                  );
-                }
-                final category = catalog.categories[index - 1];
-                final isSelected =
-                    catalog.selectedCategoryId == category.categoryId;
-                return ChoiceChip(
-                  label: Text(category.name),
-                  selected: isSelected,
-                  showCheckmark: false,
-                  onSelected: (_) => catalog.setCategory(category.categoryId),
-                );
-              },
+                    onSelected: (_) {
+                      catalog.setCategory(null);
+                      _scrollToCategory(null);
+                    },
+                  ),
+                  for (final category in catalog.categories) ...[
+                    const SizedBox(width: AppTheme.space8),
+                    ChoiceChip(
+                      key: _getChipKey(category.categoryId),
+                      label: Text(category.name),
+                      selected: catalog.selectedCategoryId == category.categoryId,
+                      showCheckmark: false,
+                      onSelected: (_) {
+                        catalog.setCategory(category.categoryId);
+                        _scrollToCategory(category.categoryId);
+                      },
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
 
