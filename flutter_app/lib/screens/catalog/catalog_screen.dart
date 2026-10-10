@@ -109,7 +109,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Boutique Catalog'),
+        title: const Text('Catalog'),
         actions: [
           IconButton(
             icon: const Icon(Icons.sort_rounded),
