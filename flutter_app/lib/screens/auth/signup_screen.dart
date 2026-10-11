@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/catalog_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
+import '../../widgets/common/welcome_banner.dart';
+import '../../widgets/navigation/app_navigation_shell.dart';
 import 'login_screen.dart';
 
 /// Screen allowing new customers to register for an account.
@@ -22,6 +25,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   String? _signupError;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -45,30 +49,74 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _handleSignup() async {
-    setState(() => _signupError = null);
+    if (_isSubmitting) return;
+    setState(() {
+      _signupError = null;
+      _isSubmitting = true;
+    });
     final auth = context.read<AuthProvider>();
     auth.clearError();
 
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _isSubmitting = false);
+      return;
+    }
 
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final name = _nameController.text.trim();
 
-    final success = await auth.signUpWithEmail(
-      email: email,
-      password: password,
-      displayName: name,
-    );
+    try {
+      final success = await auth.signUpWithEmail(
+        email: email,
+        password: password,
+        displayName: name,
+      );
 
-    if (success && mounted) {
-      auth.clearError();
-      Navigator.of(context).pop();
-    } else if (mounted) {
-      final msg = auth.errorMessage ?? 'Failed to create account.';
-      setState(() {
-        _signupError = msg;
-      });
+      if (success && mounted) {
+        auth.clearError();
+        final banner = WelcomeBannerData(
+          isNewSignup: true,
+          name: auth.displayName.isNotEmpty ? auth.displayName : name,
+          isAdmin: auth.isAdmin,
+        );
+        AppNavigationShell.navigateToHomeFresh(banner: banner);
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        } else {
+          bool transitioned = false;
+          try {
+            final catalog = Provider.of<CatalogProvider?>(context, listen: false);
+            if (catalog != null) {
+              transitioned = true;
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => AppNavigationShell(
+                    initialIndex: 0,
+                    welcomeBanner: banner,
+                  ),
+                ),
+              );
+            }
+          } catch (_) {}
+          if (!transitioned && mounted) {
+            setState(() => _isSubmitting = false);
+          }
+        }
+      } else if (mounted) {
+        final msg = auth.errorMessage ?? 'Failed to create account.';
+        setState(() {
+          _isSubmitting = false;
+          _signupError = msg;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _signupError = 'An unexpected error occurred. Please try again.';
+        });
+      }
     }
   }
 
@@ -216,8 +264,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
                     CustomButton(
                       text: 'Create Account',
-                      isLoading: auth.isLoading,
-                      onPressed: _handleSignup,
+                      isLoading: _isSubmitting || auth.isLoading,
+                      onPressed: _isSubmitting ? null : _handleSignup,
                     ),
                     const SizedBox(height: AppTheme.space24),
 

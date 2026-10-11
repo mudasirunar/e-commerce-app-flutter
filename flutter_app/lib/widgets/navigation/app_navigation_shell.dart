@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../screens/home/home_screen.dart';
+import '../../screens/catalog/catalog_screen.dart';
+import '../../screens/cart/cart_screen.dart';
+import '../../screens/orders/orders_screen.dart';
+import '../../screens/profile/profile_screen.dart';
+import '../common/welcome_banner.dart';
 import 'custom_bottom_bar.dart';
 
 /// Event dispatched when an active bottom tab is tapped again while standing on it.
@@ -110,13 +116,37 @@ class ShellNavigationScope extends InheritedWidget {
 /// Main navigation shell providing responsive bottom navigation, cart badges,
 /// scroll-to-top re-tap dispatching, and role-gated admin access.
 class AppNavigationShell extends StatefulWidget {
-  final List<Widget> destinations;
+  final List<Widget>? destinations;
   final int initialIndex;
+  final WelcomeBannerData? welcomeBanner;
+
+  static final ValueNotifier<WelcomeBannerData?> globalBannerNotifier = ValueNotifier(null);
+  static final ValueNotifier<int?> globalTabNotifier = ValueNotifier(null);
+
+  static void showBanner(WelcomeBannerData data) {
+    globalBannerNotifier.value = data;
+  }
+
+  static void navigateToHomeFresh({WelcomeBannerData? banner}) {
+    if (banner != null) {
+      globalBannerNotifier.value = banner;
+    }
+    globalTabNotifier.value = 0;
+  }
+
+  static List<Widget> get defaultDestinations => const [
+    HomeScreen(),
+    CatalogScreen(),
+    CartScreen(),
+    OrdersScreen(),
+    ProfileScreen(),
+  ];
 
   const AppNavigationShell({
     super.key,
-    required this.destinations,
+    this.destinations,
     this.initialIndex = 0,
+    this.welcomeBanner,
   });
 
   @override
@@ -126,17 +156,42 @@ class AppNavigationShell extends StatefulWidget {
 class _AppNavigationShellState extends State<AppNavigationShell> {
   late int _currentIndex;
   final ValueNotifier<TabReselectEvent?> _reselectNotifier = ValueNotifier(null);
+  WelcomeBannerData? _bannerData;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    _bannerData = widget.welcomeBanner ?? AppNavigationShell.globalBannerNotifier.value;
+    AppNavigationShell.globalBannerNotifier.addListener(_onGlobalBanner);
+    AppNavigationShell.globalTabNotifier.addListener(_onGlobalTab);
   }
 
   @override
   void dispose() {
+    AppNavigationShell.globalBannerNotifier.removeListener(_onGlobalBanner);
+    AppNavigationShell.globalTabNotifier.removeListener(_onGlobalTab);
     _reselectNotifier.dispose();
     super.dispose();
+  }
+
+  void _onGlobalBanner() {
+    if (mounted && AppNavigationShell.globalBannerNotifier.value != null) {
+      setState(() {
+        _bannerData = AppNavigationShell.globalBannerNotifier.value;
+      });
+    }
+  }
+
+  void _onGlobalTab() {
+    if (mounted && AppNavigationShell.globalTabNotifier.value != null) {
+      final tab = AppNavigationShell.globalTabNotifier.value!;
+      AppNavigationShell.globalTabNotifier.value = null;
+      setState(() {
+        _currentIndex = tab;
+      });
+      _reselectNotifier.value = TabReselectEvent(tab);
+    }
   }
 
   void _onTabSelected(int index) {
@@ -152,10 +207,11 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
 
   @override
   Widget build(BuildContext context) {
-    final cartProvider = context.watch<CartProvider>();
+    final cartProvider = Provider.of<CartProvider?>(context);
     final authProvider = context.watch<AuthProvider>();
+    final destinations = widget.destinations ?? AppNavigationShell.defaultDestinations;
 
-    final cartUnits = cartProvider.totalUnits;
+    final cartUnits = cartProvider?.totalUnits ?? 0;
 
     return TabReselectScope(
       reselectNotifier: _reselectNotifier,
@@ -163,9 +219,27 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
         hasBottomBar: true,
         child: Scaffold(
           extendBody: true,
-          body: IndexedStack(
-            index: _currentIndex,
-            children: widget.destinations,
+          body: Stack(
+            children: [
+              IndexedStack(
+                index: _currentIndex,
+                children: destinations,
+              ),
+              if (_bannerData != null)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: WelcomeBanner(
+                    data: _bannerData!,
+                    onDismissed: () {
+                      if (mounted) {
+                        setState(() => _bannerData = null);
+                      }
+                    },
+                  ),
+                ),
+            ],
           ),
           bottomNavigationBar: CustomBottomBar(
             currentIndex: _currentIndex,

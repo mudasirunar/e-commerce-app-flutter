@@ -34,6 +34,7 @@ class AuthApiService {
       body: {
         'email': email.trim(),
         'otp': otp.trim(),
+        'code': otp.trim(),
         'purpose': purpose,
       },
       requiresAuth: false,

@@ -98,17 +98,16 @@ class AuthProvider extends ChangeNotifier {
 
       final user = credential.user;
       if (user != null) {
-        try {
-          final profile = UserProfile(
-            uid: user.uid,
-            name: name.trim(),
-            email: email.trim(),
-            createdAt: DateTime.now(),
-          );
-          await _firestoreService.saveUserProfile(profile);
-        } catch (e) {
+        final profile = UserProfile(
+          uid: user.uid,
+          name: name.trim(),
+          email: email.trim(),
+          createdAt: DateTime.now(),
+        );
+        // Save profile asynchronously in the background so UI navigation is instant
+        _firestoreService.saveUserProfile(profile, isNewUser: true).catchError((e) {
           debugPrint('Firestore profile creation error during signup: $e');
-        }
+        });
       }
 
       _errorMessage = null;
@@ -138,7 +137,7 @@ class AuthProvider extends ChangeNotifier {
         email: email,
         password: password,
       );
-      _isAdminClaim = await _authService.checkIsAdmin(forceRefresh: true);
+      _isAdminClaim = await _authService.checkIsAdmin();
       _setLoading(false);
       return true;
     } on FirebaseAuthException catch (e) {

@@ -16,14 +16,15 @@ export default async function handler(req, res) {
     await verifyAppCheck(req);
 
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
-    const { email, code, purpose = 'password_reset' } = body;
+    const { email, code, otp, purpose = 'password_reset' } = body;
+    const verificationCode = code || otp;
 
-    if (!email || !code) {
+    if (!email || !verificationCode) {
       return res.status(400).json({ error: 'Email and verification code are required.' });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    const cleanCode = code.toString().trim();
+    const cleanCode = verificationCode.toString().trim();
 
     const admin = getFirebaseAdmin();
     const db = admin.firestore();

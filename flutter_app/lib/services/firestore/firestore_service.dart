@@ -31,8 +31,23 @@ class FirestoreService {
   }
 
   /// Saves or updates the user profile document complying with Firestore security rules.
-  Future<void> saveUserProfile(UserProfile profile) async {
+  Future<void> saveUserProfile(UserProfile profile, {bool isNewUser = false}) async {
     final docRef = _db.collection('users').doc(profile.uid);
+
+    if (isNewUser) {
+      await docRef.set({
+        'uid': profile.uid,
+        'name': profile.name.trim(),
+        'email': profile.email.trim(),
+        'phone': profile.phone.trim(),
+        'defaultAddress': profile.defaultAddress.trim(),
+        'role': 'customer',
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      return;
+    }
+
     final docSnap = await docRef.get();
 
     if (!docSnap.exists) {

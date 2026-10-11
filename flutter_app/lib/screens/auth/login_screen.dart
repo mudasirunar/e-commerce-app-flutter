@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/catalog_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
+import '../../widgets/common/welcome_banner.dart';
+import '../../widgets/navigation/app_navigation_shell.dart';
 import 'forgot_password_screen.dart';
 import 'signup_screen.dart';
 
@@ -21,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   String? _loginError;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -42,25 +46,69 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    setState(() => _loginError = null);
+    if (_isSubmitting) return;
+    setState(() {
+      _loginError = null;
+      _isSubmitting = true;
+    });
     final auth = context.read<AuthProvider>();
     auth.clearError();
 
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      setState(() => _isSubmitting = false);
+      return;
+    }
 
-    final success = await auth.signInWithEmail(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
+    try {
+      final success = await auth.signInWithEmail(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
 
-    if (success && mounted) {
-      auth.clearError();
-      Navigator.of(context).pop();
-    } else if (mounted) {
-      final msg = auth.errorMessage ?? 'Invalid email or password.';
-      setState(() {
-        _loginError = msg;
-      });
+      if (success && mounted) {
+        auth.clearError();
+        final banner = WelcomeBannerData(
+          isNewSignup: false,
+          name: auth.displayName,
+          isAdmin: auth.isAdmin,
+        );
+        AppNavigationShell.navigateToHomeFresh(banner: banner);
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        } else {
+          bool transitioned = false;
+          try {
+            final catalog = Provider.of<CatalogProvider?>(context, listen: false);
+            if (catalog != null) {
+              transitioned = true;
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (_) => AppNavigationShell(
+                    initialIndex: 0,
+                    welcomeBanner: banner,
+                  ),
+                ),
+              );
+            }
+          } catch (_) {}
+          if (!transitioned && mounted) {
+            setState(() => _isSubmitting = false);
+          }
+        }
+      } else if (mounted) {
+        final msg = auth.errorMessage ?? 'Invalid email or password.';
+        setState(() {
+          _isSubmitting = false;
+          _loginError = msg;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+          _loginError = 'An unexpected error occurred. Please try again.';
+        });
+      }
     }
   }
 
@@ -211,8 +259,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Sign In Button
                     CustomButton(
                       text: 'Sign In',
-                      isLoading: auth.isLoading,
-                      onPressed: _handleLogin,
+                      isLoading: _isSubmitting || auth.isLoading,
+                      onPressed: _isSubmitting ? null : _handleLogin,
                     ),
                     const SizedBox(height: AppTheme.space24),
 
