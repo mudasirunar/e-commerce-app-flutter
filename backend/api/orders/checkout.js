@@ -169,6 +169,7 @@ export default async function handler(req, res) {
         createdAt: admin.firestore.FieldValue.serverTimestamp()
       });
 
+      const nowIso = new Date().toISOString();
       return {
         idempotentReplay: false,
         orderId,
@@ -176,7 +177,11 @@ export default async function handler(req, res) {
         subtotalMinor,
         deliveryFeeMinor,
         items: itemSnapshots,
-        order: orderData
+        order: {
+          ...orderData,
+          createdAt: nowIso,
+          updatedAt: nowIso
+        }
       };
     });
 
@@ -207,7 +212,8 @@ export default async function handler(req, res) {
       orderId: transactionResult.orderId,
       subtotalMinor: transactionResult.subtotalMinor,
       deliveryFeeMinor: transactionResult.deliveryFeeMinor,
-      totalMinor: transactionResult.totalMinor
+      totalMinor: transactionResult.totalMinor,
+      order: transactionResult.order
     });
 
   } catch (error) {
