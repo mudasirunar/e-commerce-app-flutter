@@ -62,7 +62,7 @@ class OrderConfirmedScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: AppTheme.space8),
                     Text(
-                      'Your order #${order.orderId.substring(0, order.orderId.length > 8 ? 8 : order.orderId.length).toUpperCase()} has been placed and is currently pending fulfillment.',
+                      'Your order ${order.displayId} has been placed and is currently pending fulfillment.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,

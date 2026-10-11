@@ -1450,9 +1450,7 @@ class _ActiveOrderCardState extends State<_ActiveOrderCard> {
     final order = widget.order;
     final isDark = widget.isDark;
     final statusColor = _ProfileScreenState._getOrderStatusColor(order.status);
-    final shortId = order.orderId.length > 8
-        ? '#${order.orderId.substring(0, 8).toUpperCase()}'
-        : '#${order.orderId.toUpperCase()}';
+    final shortId = order.displayId;
 
     final items = order.items;
     final hasItems = items.isNotEmpty;

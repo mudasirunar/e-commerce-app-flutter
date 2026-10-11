@@ -101,9 +101,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       context: context,
       title: 'Cancel Order?',
       message:
-          'Are you sure you want to cancel Order #${liveOrder.orderId.substring(0, 8).toUpperCase()}?\n\nReserved items will be restored to store inventory immediately.',
+          'Are you sure you want to cancel Order ${liveOrder.displayId}?\n\nReserved items will be restored to store inventory immediately.',
       icon: Icons.cancel_outlined,
-      confirmLabel: 'Confirm Cancellation',
+      confirmLabel: 'Confirm',
       cancelLabel: 'Keep Order',
       isDestructive: true,
     );
@@ -147,7 +147,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Order #${liveOrder.orderId.substring(0, 8).toUpperCase()}'),
+        title: Text('Order ${liveOrder.displayId}'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: AppTheme.space20, vertical: AppTheme.space24),

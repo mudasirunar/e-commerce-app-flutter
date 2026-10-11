@@ -49,7 +49,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       context: context,
       title: 'Update to $newStatus?',
       message:
-          'Are you sure you want to transition Order #${order.orderId.substring(0, 8).toUpperCase()} from ${order.status.value} to $newStatus?',
+          'Are you sure you want to transition Order ${order.displayId} from ${order.status.value} to $newStatus?',
       icon: Icons.sync_alt_rounded,
       confirmLabel: 'Confirm',
       cancelLabel: 'Cancel',
@@ -154,7 +154,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      '#${order.orderId.substring(0, 8).toUpperCase()}',
+                                      order.displayId,
                                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                                     ),
                                     OrderStatusBadge(status: order.status),

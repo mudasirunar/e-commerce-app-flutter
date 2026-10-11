@@ -156,6 +156,23 @@ class OrderModel {
   int get totalItemCount => items.fold(0, (sum, item) => sum + item.quantity);
   int get totalQuantity => totalItemCount;
 
+  /// Short distinctive identifier string without '#' prefix (e.g. "ORD_A3B8C1" or "ORD_1234").
+  /// Avoids duplicate order numbers caused by truncating the epoch timestamp prefix.
+  String get shortId {
+    final parts = orderId.split('_');
+    // Real backend ID format: ord_<timestamp>_<token> (10+ digit epoch timestamp)
+    if (parts.length >= 3 && parts[1].length >= 10 && int.tryParse(parts[1]) != null) {
+      return 'ORD_${parts.last.toUpperCase()}';
+    }
+    if (orderId.length > 8) {
+      return orderId.substring(0, 8).toUpperCase();
+    }
+    return orderId.toUpperCase();
+  }
+
+  /// Display string with '#' prefix: e.g. "#ORD_A3B8C1".
+  String get displayId => '#$shortId';
+
   factory OrderModel.fromMap(Map<String, dynamic> data, String orderId) {
     final rawItems = data['items'] as List<dynamic>? ?? [];
     final itemsList = rawItems
