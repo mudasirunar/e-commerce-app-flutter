@@ -5,6 +5,7 @@ import 'package:ecommerceapp/models/user_profile.dart';
 import 'package:ecommerceapp/providers/auth_provider.dart';
 import 'package:ecommerceapp/screens/auth/login_screen.dart';
 import 'package:ecommerceapp/widgets/common/custom_button.dart';
+import 'package:ecommerceapp/widgets/common/custom_text_field.dart';
 
 class TestAuthProvider extends ChangeNotifier implements AuthProvider {
   @override
@@ -68,11 +69,11 @@ void main() {
 
       expect(find.text('Welcome Back'), findsOneWidget);
       expect(find.text('Sign In'), findsWidgets);
-      expect(find.byType(TextFormField), findsNWidgets(2));
+      expect(find.byType(CustomTextField), findsNWidgets(2));
 
       // Enter valid email and password
-      await tester.enterText(find.byType(TextFormField).first, 'customer@example.com');
-      await tester.enterText(find.byType(TextFormField).last, 'secret123');
+      await tester.enterText(find.byType(CustomTextField).first, 'customer@example.com');
+      await tester.enterText(find.byType(CustomTextField).last, 'secret123');
       await tester.pumpAndSettle();
 
       await tester.tap(find.widgetWithText(CustomButton, 'Sign In'));

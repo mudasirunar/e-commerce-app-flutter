@@ -18,6 +18,8 @@ class ForgotPasswordScreen extends StatefulWidget {
 }
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+  final _emailFormKey = GlobalKey<FormState>();
+  final _resetPasswordFormKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -39,15 +41,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   Future<void> _handleSendOtp() async {
+    setState(() => _errorMessage = null);
+    if (!_emailFormKey.currentState!.validate()) return;
+
     final email = _emailController.text.trim();
-    if (email.isEmpty || !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
-      setState(() => _errorMessage = 'Please enter a valid email address');
-      return;
-    }
 
     setState(() {
       _isLoading = true;
@@ -99,17 +101,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _handleResetPassword() async {
-    final password = _passwordController.text;
-    final confirm = _confirmPasswordController.text;
+    setState(() => _errorMessage = null);
+    if (!_resetPasswordFormKey.currentState!.validate()) return;
 
-    if (password.length < 6) {
-      setState(() => _errorMessage = 'Password must be at least 6 characters');
-      return;
-    }
-    if (password != confirm) {
-      setState(() => _errorMessage = 'Passwords do not match');
-      return;
-    }
+    final password = _passwordController.text;
 
     setState(() {
       _isLoading = true;
@@ -187,63 +182,93 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                   const SizedBox(height: AppTheme.space32),
 
-                  if (_errorMessage != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(AppTheme.space12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.errorContainer,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                      ),
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: AppTheme.error, fontSize: 13),
-                      ),
-                    ),
-                    const SizedBox(height: AppTheme.space16),
-                  ],
-
                   if (_resetToken == null) ...[
-                    CustomTextField(
-                      controller: _emailController,
-                      label: 'Email Address',
-                      hint: 'name@example.com',
-                      keyboardType: TextInputType.emailAddress,
-                      prefixIcon: Icons.email_outlined,
-                    ),
-                    const SizedBox(height: AppTheme.space24),
-                    CustomButton(
-                      text: 'Send Reset Code',
-                      isLoading: _isLoading,
-                      onPressed: _handleSendOtp,
+                    Form(
+                      key: _emailFormKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          CustomTextField(
+                            controller: _emailController,
+                            label: 'Email Address',
+                            hint: 'name@example.com',
+                            keyboardType: TextInputType.emailAddress,
+                            prefixIcon: Icons.email_outlined,
+                            errorText: _errorMessage,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Please enter your email address';
+                              }
+                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                                return 'Enter a valid email address';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppTheme.space24),
+                          CustomButton(
+                            text: 'Send Reset Code',
+                            isLoading: _isLoading,
+                            onPressed: _handleSendOtp,
+                          ),
+                        ],
+                      ),
                     ),
                   ] else ...[
-                    CustomTextField(
-                      controller: _passwordController,
-                      label: 'New Password',
-                      hint: '••••••••',
-                      obscureText: _obscurePassword,
-                      prefixIcon: Icons.lock_outline_rounded,
-                      suffix: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                          size: 20,
-                        ),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    Form(
+                      key: _resetPasswordFormKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          CustomTextField(
+                            controller: _passwordController,
+                            label: 'New Password',
+                            hint: '••••••••',
+                            obscureText: _obscurePassword,
+                            prefixIcon: Icons.lock_outline_rounded,
+                            errorText: _errorMessage,
+                            suffix: IconButton(
+                              icon: Icon(
+                                _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                                size: 20,
+                              ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter a new password';
+                              }
+                              if (value.length < 6) {
+                                return 'Password must be at least 6 characters';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppTheme.space16),
+                          CustomTextField(
+                            controller: _confirmPasswordController,
+                            label: 'Confirm New Password',
+                            hint: '••••••••',
+                            obscureText: _obscurePassword,
+                            prefixIcon: Icons.lock_outline_rounded,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please confirm your new password';
+                              }
+                              if (value != _passwordController.text) {
+                                return 'Passwords do not match';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: AppTheme.space24),
+                          CustomButton(
+                            text: 'Set New Password',
+                            isLoading: _isLoading,
+                            onPressed: _handleResetPassword,
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: AppTheme.space16),
-                    CustomTextField(
-                      controller: _confirmPasswordController,
-                      label: 'Confirm New Password',
-                      hint: '••••••••',
-                      obscureText: _obscurePassword,
-                      prefixIcon: Icons.lock_outline_rounded,
-                    ),
-                    const SizedBox(height: AppTheme.space24),
-                    CustomButton(
-                      text: 'Set New Password',
-                      isLoading: _isLoading,
-                      onPressed: _handleResetPassword,
                     ),
                   ],
                 ],

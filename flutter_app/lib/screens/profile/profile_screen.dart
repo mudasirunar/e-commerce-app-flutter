@@ -517,6 +517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showEditAddressDialog(BuildContext context, DeliveryInfo? current) {
+    final addressFormKey = GlobalKey<FormState>();
     final nameCtrl = TextEditingController(text: current?.fullName ?? '');
     final phoneCtrl = TextEditingController(text: current?.phone ?? '');
     final addressCtrl = TextEditingController(text: current?.address ?? '');
@@ -539,112 +540,137 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 58,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.location_on_outlined,
-                        size: 28,
-                        color: theme.colorScheme.primary,
+              child: Form(
+                key: addressFormKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.location_on_outlined,
+                          size: 28,
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    current == null
-                        ? 'Add Delivery Address'
-                        : 'Edit Delivery Address',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 19,
+                    const SizedBox(height: 18),
+                    Text(
+                      current == null
+                          ? 'Add Delivery Address'
+                          : 'Edit Delivery Address',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 19,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  CustomTextField(
-                    controller: nameCtrl,
-                    label: 'Recipient Name',
-                    hint: 'Full Name',
-                  ),
-                  const SizedBox(height: AppTheme.space12),
-                  CustomTextField(
-                    controller: phoneCtrl,
-                    label: 'Mobile Phone',
-                    hint: '03001234567',
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: AppTheme.space12),
-                  CustomTextField(
-                    controller: addressCtrl,
-                    label: 'Detailed Address',
-                    hint: 'House, Street, Area',
-                    maxLines: 2,
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 46,
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.of(ctx).pop(),
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(0, 46),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
+                    const SizedBox(height: 18),
+                    CustomTextField(
+                      controller: nameCtrl,
+                      label: 'Recipient Name',
+                      hint: 'Full Name',
+                      validator: (val) {
+                        if (val == null || val.trim().length < 2) {
+                          return 'Please enter recipient name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppTheme.space12),
+                    CustomTextField(
+                      controller: phoneCtrl,
+                      label: 'Mobile Phone',
+                      hint: '03001234567',
+                      keyboardType: TextInputType.phone,
+                      validator: (val) {
+                        if (val == null || val.trim().isEmpty) {
+                          return 'Please enter mobile number';
+                        }
+                        final cleaned = val.replaceAll(RegExp(r'[\s\-]'), '');
+                        if (!RegExp(r'^(\+92|92|0)?3[0-9]{9}$').hasMatch(cleaned)) {
+                          return 'Enter valid mobile (e.g. 03001234567)';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppTheme.space12),
+                    CustomTextField(
+                      controller: addressCtrl,
+                      label: 'Detailed Address',
+                      hint: 'House, Street, Area',
+                      maxLines: 2,
+                      validator: (val) {
+                        if (val == null || val.trim().length < 5) {
+                          return 'Please enter delivery address';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 46,
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(0, 46),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                side: BorderSide(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.18)
+                                      : const Color(0xFFD6D3D1),
+                                  width: 1.2,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
-                              side: BorderSide(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.18)
-                                    : const Color(0xFFD6D3D1),
-                                width: 1.2,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              'Cancel',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: isDark
-                                    ? Colors.white70
-                                    : const Color(0xFF44403C),
+                              child: Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark
+                                      ? Colors.white70
+                                      : const Color(0xFF44403C),
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: SizedBox(
-                          height: 46,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              final newInfo = DeliveryInfo(
-                                fullName: nameCtrl.text.trim(),
-                                phone: phoneCtrl.text.trim(),
-                                address: addressCtrl.text.trim(),
-                                city: city,
-                              );
-                              if (newInfo.isValid) {
-                                final auth = context.read<AuthProvider>();
-                                await auth.updateDeliveryProfile(
-                                  defaultDeliveryInfo: newInfo,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SizedBox(
+                            height: 46,
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (!addressFormKey.currentState!.validate()) return;
+                                final newInfo = DeliveryInfo(
+                                  fullName: nameCtrl.text.trim(),
+                                  phone: phoneCtrl.text.trim(),
+                                  address: addressCtrl.text.trim(),
+                                  city: city,
                                 );
-                                if (ctx.mounted) Navigator.of(ctx).pop();
-                              }
-                            },
+                                if (newInfo.isValid) {
+                                  final auth = context.read<AuthProvider>();
+                                  await auth.updateDeliveryProfile(
+                                    defaultDeliveryInfo: newInfo,
+                                  );
+                                  if (ctx.mounted) Navigator.of(ctx).pop();
+                                }
+                              },
                             style: ElevatedButton.styleFrom(
                               minimumSize: const Size(0, 46),
                               padding: const EdgeInsets.symmetric(
@@ -673,7 +699,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ),
-        );
+        ),
+      );
       },
     );
   }

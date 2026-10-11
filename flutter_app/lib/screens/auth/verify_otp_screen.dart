@@ -23,6 +23,7 @@ class VerifyOtpScreen extends StatefulWidget {
 }
 
 class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _otpController = TextEditingController();
   bool _isLoading = false;
   bool _isResending = false;
@@ -58,11 +59,10 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
   }
 
   Future<void> _handleVerify() async {
+    setState(() => _errorMessage = null);
+    if (!_formKey.currentState!.validate()) return;
+
     final otp = _otpController.text.trim();
-    if (otp.length != 6) {
-      setState(() => _errorMessage = 'Please enter a 6-digit OTP code');
-      return;
-    }
 
     setState(() {
       _isLoading = true;
@@ -204,22 +204,6 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                   ),
                   const SizedBox(height: AppTheme.space32),
 
-                  if (_errorMessage != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(AppTheme.space12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.errorContainer,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                      ),
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: AppTheme.error, fontSize: 13),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: AppTheme.space16),
-                  ],
-
                   if (_successMessage != null) ...[
                     Container(
                       padding: const EdgeInsets.all(AppTheme.space12),
@@ -236,20 +220,39 @@ class _VerifyOtpScreenState extends State<VerifyOtpScreen> {
                     const SizedBox(height: AppTheme.space16),
                   ],
 
-                  CustomTextField(
-                    controller: _otpController,
-                    label: '6-Digit Code',
-                    hint: '123456',
-                    keyboardType: TextInputType.number,
-                    prefixIcon: Icons.security_rounded,
-                    maxLength: 6,
-                  ),
-                  const SizedBox(height: AppTheme.space24),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        CustomTextField(
+                          controller: _otpController,
+                          label: '6-Digit Code',
+                          hint: '123456',
+                          keyboardType: TextInputType.number,
+                          prefixIcon: Icons.security_rounded,
+                          maxLength: 6,
+                          errorText: _errorMessage,
+                          validator: (val) {
+                            final trimmed = (val ?? '').trim();
+                            if (trimmed.isEmpty) {
+                              return 'Please enter the verification code';
+                            }
+                            if (trimmed.length != 6) {
+                              return 'Please enter a valid 6-digit code';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppTheme.space24),
 
-                  CustomButton(
-                    text: 'Verify Code',
-                    isLoading: _isLoading,
-                    onPressed: _handleVerify,
+                        CustomButton(
+                          text: 'Verify Code',
+                          isLoading: _isLoading,
+                          onPressed: _handleVerify,
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: AppTheme.space24),
 
