@@ -32,6 +32,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late final Timer _countdownTimer;
   int _remainingSeconds = 6 * 3600 + 42 * 60 + 18; // 06:42:18 simulation
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -48,6 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _countdownTimer.cancel();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -148,8 +150,12 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: AppTheme.space8),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
+      body: ScrollToTopListener(
+        tabIndex: 0,
+        scrollController: _scrollController,
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const SizedBox(height: AppTheme.space8),
@@ -294,7 +300,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildCategoryStories(BuildContext context, List<Category> categories, bool isDark) {

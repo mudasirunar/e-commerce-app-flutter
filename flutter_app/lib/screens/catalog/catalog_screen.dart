@@ -367,7 +367,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
           const SizedBox(width: AppTheme.space8),
         ],
       ),
-      body: Column(
+      body: ScrollToTopListener(
+        tabIndex: 1,
+        onScrollToTop: _scrollToTop,
+        scrollController: _productsScrollController,
+        child: Column(
         children: [
           // 1. Search Bar
           Padding(
@@ -626,6 +630,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
           ),
         ],
       ),
-    );
+    ),
+  );
   }
 }

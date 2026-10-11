@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../theme/app_theme.dart';
@@ -14,8 +15,21 @@ import '../checkout/checkout_screen.dart';
 
 /// Screen displaying the customer's persistent shopping bag, item quantities,
 /// stock validation warnings, and authoritative delivery/subtotal calculations.
-class CartScreen extends StatelessWidget {
+class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
+
+  @override
+  State<CartScreen> createState() => _CartScreenState();
+}
+
+class _CartScreenState extends State<CartScreen> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,123 +50,145 @@ class CartScreen extends StatelessWidget {
             ),
         ],
       ),
-      body: !auth.isAuthenticated
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppTheme.space32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.shopping_bag_outlined,
-                      size: 64,
-                      color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
-                    ),
-                    const SizedBox(height: AppTheme.space16),
-                    Text(
-                      'Sign In to View Bag',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+      body: ScrollToTopListener(
+        tabIndex: 2,
+        scrollController: _scrollController,
+        child: !auth.isAuthenticated
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppTheme.space32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.shopping_bag_outlined,
+                        size: 64,
+                        color: isDark
+                            ? AppTheme.darkBorder
+                            : AppTheme.lightBorder,
                       ),
-                    ),
-                    const SizedBox(height: AppTheme.space8),
-                    Text(
-                      'Your cart items are synchronized with your account for seamless shopping.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                      const SizedBox(height: AppTheme.space16),
+                      Text(
+                        'Sign In to View Bag',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: isDark
+                              ? AppTheme.darkTextPrimary
+                              : AppTheme.lightTextPrimary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: AppTheme.space24),
-                    CustomButton(
-                      text: 'Sign In Now',
-                      width: 180,
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const LoginScreen()),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : cart.isLoading && cart.isEmpty
-              ? const LoadingView(message: 'Loading your shopping bag...')
-              : cart.isEmpty
-                  ? EmptyView(
-                      icon: Icons.shopping_bag_outlined,
-                      title: 'Your Bag is Empty',
-                      subtitle: 'Explore our curated collection to find handcrafted furniture and decor.',
-                      actionText: 'Explore Collection',
-                      onAction: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const CatalogScreen()),
-                        );
-                      },
-                    )
-                  : Column(
-                      children: [
-                        // Stock warning banner if any item exceeds inventory
-                        if (cart.hasStockErrors || cart.hasUnavailableItems) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppTheme.space16,
-                              vertical: AppTheme.space12,
+                      const SizedBox(height: AppTheme.space8),
+                      Text(
+                        'Your cart items are synchronized with your account for seamless shopping.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark
+                              ? AppTheme.darkTextSecondary
+                              : AppTheme.lightTextSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: AppTheme.space24),
+                      CustomButton(
+                        text: 'Sign In Now',
+                        width: 180,
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const LoginScreen(),
                             ),
-                            color: AppTheme.warningContainer,
-                            child: Row(
-                              children: [
-                                const Icon(Icons.warning_amber_rounded, color: AppTheme.warning, size: 20),
-                                const SizedBox(width: AppTheme.space8),
-                                const Expanded(
-                                  child: Text(
-                                    'One or more items in your bag exceed available inventory. Please adjust quantities before checkout.',
-                                    style: TextStyle(
-                                      color: Color(0xFF92400E),
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : cart.isLoading && cart.isEmpty
+            ? const LoadingView(message: 'Loading your shopping bag...')
+            : cart.isEmpty
+            ? EmptyView(
+                icon: Icons.shopping_bag_outlined,
+                title: 'Your Bag is Empty',
+                subtitle: 'Explore our curated collection to find handcrafted furniture and decor.',
+                actionText: 'Explore Collection',
+                onAction: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const CatalogScreen()),
+                  );
+                },
+              )
+            : Column(
+                children: [
+                  // Stock warning banner if any item exceeds inventory
+                  if (cart.hasStockErrors || cart.hasUnavailableItems) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppTheme.space16,
+                        vertical: AppTheme.space12,
+                      ),
+                      color: AppTheme.warningContainer,
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: AppTheme.warning,
+                            size: 20,
+                          ),
+                          const SizedBox(width: AppTheme.space8),
+                          const Expanded(
+                            child: Text(
+                              'One or more items in your bag exceed available inventory. Please adjust quantities before checkout.',
+                              style: TextStyle(
+                                color: Color(0xFF92400E),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
-
-                        // Items list
-                        Expanded(
-                          child: ListView.separated(
-                            padding: const EdgeInsets.all(AppTheme.space16),
-                            itemCount: cart.items.length,
-                            separatorBuilder: (context, index) => const SizedBox(height: AppTheme.space12),
-                            itemBuilder: (context, index) {
-                              final item = cart.items[index];
-                              return CartItemTile(
-                                item: item,
-                                onQuantityChanged: (newQty) {
-                                  cart.updateQuantity(item.productId, newQty);
-                                },
-                                onRemove: () {
-                                  cart.removeItem(item.productId);
-                                },
-                              );
-                            },
-                          ),
-                        ),
-
-                        // Order Summary & Checkout Bottom Sheet
-                        _buildCartSummary(context, cart, isDark),
-                      ],
+                      ),
                     ),
+                  ],
+
+                  // Items list
+                  Expanded(
+                    child: ListView.separated(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(AppTheme.space16),
+                      itemCount: cart.items.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: AppTheme.space12),
+                      itemBuilder: (context, index) {
+                        final item = cart.items[index];
+                        return CartItemTile(
+                          item: item,
+                          onQuantityChanged: (newQty) {
+                            cart.updateQuantity(item.productId, newQty);
+                          },
+                          onRemove: () {
+                            cart.removeItem(item.productId);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+
+                  _buildCartSummary(context, cart, isDark),
+                ],
+              ),
+      ),
     );
   }
 
-  Widget _buildCartSummary(BuildContext context, CartProvider cart, bool isDark) {
-    final canCheckout = !cart.isEmpty && !cart.hasStockErrors && !cart.hasUnavailableItems;
+  Widget _buildCartSummary(
+    BuildContext context,
+    CartProvider cart,
+    bool isDark,
+  ) {
+    final canCheckout =
+        !cart.isEmpty && !cart.hasStockErrors && !cart.hasUnavailableItems;
     final hasBottomBar = ShellNavigationScope.hasBottomBarOf(context);
     final bottomPadding = hasBottomBar ? 80.0 : AppTheme.space20;
 
@@ -185,7 +221,9 @@ class CartScreen extends StatelessWidget {
                   'Subtotal (${cart.totalUnits} items)',
                   style: TextStyle(
                     fontSize: 14,
-                    color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                    color: isDark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
                   ),
                 ),
                 Text(
@@ -193,7 +231,9 @@ class CartScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                    color: isDark
+                        ? AppTheme.darkTextPrimary
+                        : AppTheme.lightTextPrimary,
                   ),
                 ),
               ],
@@ -208,7 +248,9 @@ class CartScreen extends StatelessWidget {
                   'Standard Delivery',
                   style: TextStyle(
                     fontSize: 14,
-                    color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                    color: isDark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
                   ),
                 ),
                 Text(
@@ -218,7 +260,9 @@ class CartScreen extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: cart.deliveryFeeMinor == 0
                         ? AppTheme.success
-                        : (isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary),
+                        : (isDark
+                              ? AppTheme.darkTextPrimary
+                              : AppTheme.lightTextPrimary),
                   ),
                 ),
               ],
@@ -237,7 +281,9 @@ class CartScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                    color: isDark
+                        ? AppTheme.darkTextPrimary
+                        : AppTheme.lightTextPrimary,
                   ),
                 ),
                 Text(
@@ -254,11 +300,15 @@ class CartScreen extends StatelessWidget {
 
             // Checkout CTA
             CustomButton(
-              text: canCheckout ? 'Proceed to Checkout' : 'Resolve Stock Before Checkout',
+              text: canCheckout
+                  ? 'Proceed to Checkout'
+                  : 'Resolve Stock Before Checkout',
               onPressed: canCheckout
                   ? () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const CheckoutScreen(),
+                        ),
                       );
                     }
                   : null,
@@ -269,7 +319,10 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmClearCart(BuildContext context, CartProvider cart) async {
+  Future<void> _confirmClearCart(
+    BuildContext context,
+    CartProvider cart,
+  ) async {
     final confirmed = await AppConfirmationDialog.show(
       context: context,
       title: 'Clear Shopping Bag?',
