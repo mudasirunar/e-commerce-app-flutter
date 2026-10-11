@@ -112,6 +112,17 @@ void main() {
       expect(provider.filteredProducts.isEmpty, isTrue);
     });
 
+    test('searches products by category name and sorts title matches alphabetically first', () async {
+      await pumpEventQueue();
+
+      // Search by category name 'Clothing' matches p2 ('Vintage Denim Jacket') and p3 ('Cotton T-Shirt')
+      provider.setSearchQuery('Clothing');
+      expect(provider.filteredProducts.length, 2);
+      // Alphabetical order: 'Cotton T-Shirt' (p3) before 'Vintage Denim Jacket' (p2)
+      expect(provider.filteredProducts[0].productId, 'p3');
+      expect(provider.filteredProducts[1].productId, 'p2');
+    });
+
     test('sorts products low to high and high to low', () async {
       await pumpEventQueue();
 

@@ -71,16 +71,6 @@ class CatalogProvider extends ChangeNotifier {
       result = result.where((p) => p.categoryId == _selectedCategoryId).toList();
     }
 
-    // Filter by Search Query
-    if (_searchQuery.trim().isNotEmpty) {
-      final query = _searchQuery.trim().toLowerCase();
-      result = result.where((p) {
-        return p.normalizedName.contains(query) ||
-            p.name.toLowerCase().contains(query) ||
-            p.description.toLowerCase().contains(query);
-      }).toList();
-    }
-
     // Filter by Price Range
     if (_minPricePkr != null) {
       result = result.where((p) => p.pricePkr >= _minPricePkr!).toList();
@@ -89,30 +79,82 @@ class CatalogProvider extends ChangeNotifier {
       result = result.where((p) => p.pricePkr <= _maxPricePkr!).toList();
     }
 
-    // Sort Results
-    switch (_sortOption) {
-      case SortOption.priceLowToHigh:
-        result.sort((a, b) => a.priceMinor.compareTo(b.priceMinor));
-        break;
-      case SortOption.priceHighToLow:
-        result.sort((a, b) => b.priceMinor.compareTo(a.priceMinor));
-        break;
-      case SortOption.newest:
-        result.sort((a, b) {
+    // Filter & Sort by Search Query or Sort Option
+    if (_searchQuery.trim().isNotEmpty) {
+      final query = _searchQuery.trim().toLowerCase();
+
+      // Returns match tier score:
+      // 0: Title starts with query
+      // 1: Title contains query
+      // 2: Category name contains query
+      // 3: Description contains query
+      // 4: No match
+      int getSearchScore(Product p) {
+        final nameLower = p.name.toLowerCase();
+        final normLower = p.normalizedName.toLowerCase();
+        if (nameLower.startsWith(query) || normLower.startsWith(query)) return 0;
+        if (nameLower.contains(query) || normLower.contains(query)) return 1;
+
+        final category = _categories.firstWhere(
+          (c) => c.categoryId == p.categoryId,
+          orElse: () => const Category(categoryId: '', name: ''),
+        );
+        if (category.name.toLowerCase().contains(query)) return 2;
+
+        if (p.description.toLowerCase().contains(query)) return 3;
+
+        return 4;
+      }
+
+      result = result.where((p) => getSearchScore(p) < 4).toList();
+
+      result.sort((a, b) {
+        final scoreA = getSearchScore(a);
+        final scoreB = getSearchScore(b);
+        if (scoreA != scoreB) {
+          return scoreA.compareTo(scoreB);
+        }
+
+        // Apply secondary sort if user selected non-default sort
+        if (_sortOption == SortOption.priceLowToHigh) {
+          return a.priceMinor.compareTo(b.priceMinor);
+        } else if (_sortOption == SortOption.priceHighToLow) {
+          return b.priceMinor.compareTo(a.priceMinor);
+        } else if (_sortOption == SortOption.newest) {
           final aTime = a.createdAt?.millisecondsSinceEpoch ?? 0;
           final bTime = b.createdAt?.millisecondsSinceEpoch ?? 0;
           return bTime.compareTo(aTime);
-        });
-        break;
-      case SortOption.featured:
-        // Featured products first, then alphabetically
-        result.sort((a, b) {
-          if (a.isFeatured == b.isFeatured) {
-            return a.name.compareTo(b.name);
-          }
-          return a.isFeatured ? -1 : 1;
-        });
-        break;
+        }
+
+        // Main priority: Alphabetical A-Z by product title
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+    } else {
+      // Normal sorting based on _sortOption when not searching
+      switch (_sortOption) {
+        case SortOption.priceLowToHigh:
+          result.sort((a, b) => a.priceMinor.compareTo(b.priceMinor));
+          break;
+        case SortOption.priceHighToLow:
+          result.sort((a, b) => b.priceMinor.compareTo(a.priceMinor));
+          break;
+        case SortOption.newest:
+          result.sort((a, b) {
+            final aTime = a.createdAt?.millisecondsSinceEpoch ?? 0;
+            final bTime = b.createdAt?.millisecondsSinceEpoch ?? 0;
+            return bTime.compareTo(aTime);
+          });
+          break;
+        case SortOption.featured:
+          // Featured products first, then alphabetically
+          result.sort((a, b) {
+            if (a.isFeatured == b.isFeatured) {
+              return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+            }
+            return a.isFeatured ? -1 : 1;
+          });
+          break;
+      }
     }
 
     return result;

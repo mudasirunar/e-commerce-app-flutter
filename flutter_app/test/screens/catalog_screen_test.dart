@@ -41,6 +41,12 @@ class TestCatalogProvider extends ChangeNotifier implements CatalogProvider {
   String searchQuery = '';
 
   @override
+  double? minPricePkr;
+
+  @override
+  double? maxPricePkr;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 
   @override
