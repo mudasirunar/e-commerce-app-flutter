@@ -67,7 +67,17 @@ class OrderProvider extends ChangeNotifier {
     if (_orderApiService == null) return false;
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+
+    // Optimistically update the order status in memory for instant feedback
+    final index = _orders.indexWhere((o) => o.orderId == orderId);
+    OrderModel? originalOrder;
+    if (index != -1) {
+      originalOrder = _orders[index];
+      _orders[index] = originalOrder.copyWith(status: OrderStatus.cancelled);
+      notifyListeners();
+    } else {
+      notifyListeners();
+    }
 
     try {
       await _orderApiService.cancelOrder(orderId: orderId, reason: reason);
@@ -75,11 +85,18 @@ class OrderProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } on ApiException catch (e) {
+      // Revert if API failed
+      if (index != -1 && originalOrder != null) {
+        _orders[index] = originalOrder;
+      }
       _errorMessage = e.message;
       _isLoading = false;
       notifyListeners();
       return false;
     } catch (e) {
+      if (index != -1 && originalOrder != null) {
+        _orders[index] = originalOrder;
+      }
       _errorMessage = 'Failed to cancel order.';
       _isLoading = false;
       notifyListeners();

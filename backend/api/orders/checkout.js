@@ -196,16 +196,17 @@ export default async function handler(req, res) {
     }
 
     // 6. Clean up user cart asynchronously (non-blocking)
-    try {
-      const cartSnap = await db.collection('users').doc(uid).collection('cart').get();
-      if (!cartSnap.empty) {
-        const batch = db.batch();
-        cartSnap.docs.forEach(doc => batch.delete(doc.ref));
-        await batch.commit();
-      }
-    } catch (cartErr) {
-      console.warn('Cart cleanup after checkout completed with warning:', cartErr);
-    }
+    db.collection('users').doc(uid).collection('cart').get()
+      .then(cartSnap => {
+        if (!cartSnap.empty) {
+          const batch = db.batch();
+          cartSnap.docs.forEach(doc => batch.delete(doc.ref));
+          return batch.commit();
+        }
+      })
+      .catch(cartErr => {
+        console.warn('Cart cleanup after checkout completed with warning:', cartErr);
+      });
 
     return res.status(200).json({
       success: true,

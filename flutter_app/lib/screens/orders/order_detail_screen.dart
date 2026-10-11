@@ -119,17 +119,23 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       if (mounted) {
         setState(() => _isCancelling = false);
         if (success) {
+          ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Order cancelled and inventory restored.'),
               backgroundColor: AppTheme.success,
+              duration: Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
             ),
           );
         } else if (orderProvider.errorMessage != null) {
+          ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(orderProvider.errorMessage!),
               backgroundColor: AppTheme.error,
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }
@@ -408,19 +414,25 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
 
   Widget _buildStatusStepper(OrderStatus status, bool isDark) {
     if (status == OrderStatus.cancelled) {
+      final bannerBg = isDark ? const Color(0xFF2C1316) : const Color(0xFFFEF2F2);
+      final bannerBorder = isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA);
+      final bannerFg = isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C);
+      final iconColor = isDark ? const Color(0xFFEF4444) : const Color(0xFFDC2626);
+
       return Container(
         padding: const EdgeInsets.all(AppTheme.space12),
         decoration: BoxDecoration(
-          color: AppTheme.errorContainer,
+          color: bannerBg,
           borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+          border: Border.all(color: bannerBorder, width: 1),
         ),
-        child: const Row(
+        child: Row(
           children: [
-            Icon(Icons.cancel_outlined, color: AppTheme.error, size: 20),
-            SizedBox(width: AppTheme.space8),
+            Icon(Icons.cancel_outlined, color: iconColor, size: 20),
+            const SizedBox(width: AppTheme.space8),
             Text(
               'This order was cancelled and closed.',
-              style: TextStyle(color: AppTheme.error, fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(color: bannerFg, fontSize: 13, fontWeight: FontWeight.w600),
             ),
           ],
         ),

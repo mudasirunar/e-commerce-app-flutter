@@ -58,19 +58,11 @@ export default async function handler(req, res) {
         throw new Error(`Cannot cancel an order that has already been ${order.status.toLowerCase()}.`);
       }
 
-      // Read products to restore stock
-      const productSnaps = await Promise.all(
-        order.items.map(item => transaction.get(db.collection('products').doc(item.productId)))
-      );
-
-      // Restore stock for all order items
-      for (let i = 0; i < order.items.length; i++) {
-        const item = order.items[i];
-        const pSnap = productSnaps[i];
-        if (pSnap.exists) {
-          const currentStock = pSnap.data().stockQuantity || 0;
-          transaction.update(pSnap.ref, {
-            stockQuantity: currentStock + item.quantity,
+      // Restore stock for all order items atomically (eliminates redundant product read phase)
+      for (const item of order.items) {
+        if (item && item.productId) {
+          transaction.update(db.collection('products').doc(item.productId), {
+            stockQuantity: admin.firestore.FieldValue.increment(item.quantity),
             updatedAt: admin.firestore.FieldValue.serverTimestamp()
           });
         }

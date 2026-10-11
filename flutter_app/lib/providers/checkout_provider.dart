@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/delivery_info.dart';
 import '../models/order.dart';
@@ -84,10 +85,10 @@ class CheckoutProvider extends ChangeNotifier {
 
       _confirmedOrder = order;
 
-      // Successful order: clear attempt ID and customer cart
-      await _localStorageService.clearLatestAttemptId();
+      // Successful order: clear attempt ID and customer cart non-blockingly
+      unawaited(_localStorageService.clearLatestAttemptId());
       _activeAttemptId = null;
-      await cartProvider.clearCart();
+      unawaited(cartProvider.clearCart());
 
       _isSubmitting = false;
       notifyListeners();

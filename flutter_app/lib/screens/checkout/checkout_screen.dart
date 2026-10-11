@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/delivery_info.dart';
@@ -38,6 +39,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   String _lastFormattedSubtotal = '';
   String _lastFormattedDeliveryFee = '';
   String _lastFormattedTotal = '';
+  bool _isSubmittingLocally = false;
   bool _isNavigatingToConfirmed = false;
 
   @override
@@ -146,7 +148,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _handlePlaceOrder() async {
+    if (_isSubmittingLocally || _isNavigatingToConfirmed) return;
     if (!_formKey.currentState!.validate()) return;
+
+    // Immediately dismiss keyboard and show active loading state with 0ms delay
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isSubmittingLocally = true;
+      _isNavigatingToConfirmed = false;
+    });
 
     final deliveryInfo = DeliveryInfo(
       fullName: _nameController.text.trim(),
@@ -163,12 +173,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     checkout.updateDeliveryInfo(deliveryInfo);
 
-    setState(() => _isNavigatingToConfirmed = false);
-
-    // Save address preferences concurrently in the background so checkout is not delayed
-    Future<void>? addressSaveFuture;
+    // Save address preferences asynchronously in the background (zero blocking on checkout)
     if (_saveAsDefault) {
-      addressSaveFuture = _saveAddressPreference(addressProvider, auth, deliveryInfo);
+      unawaited(_saveAddressPreference(addressProvider, auth, deliveryInfo));
     }
 
     final success = await checkout.submitCheckout(cart);
@@ -177,17 +184,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() => _isNavigatingToConfirmed = true);
       final confirmedOrder = checkout.confirmedOrder!;
 
-      if (addressSaveFuture != null) {
-        await addressSaveFuture;
-      }
-
-      if (!mounted) return;
-
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => OrderConfirmedScreen(order: confirmedOrder),
         ),
       );
+    } else {
+      if (mounted) {
+        setState(() => _isSubmittingLocally = false);
+      }
     }
   }
 
@@ -529,19 +534,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cart = context.watch<CartProvider>();
     final checkout = context.watch<CheckoutProvider>();
     final addressProvider = context.watch<AddressProvider>();
-    final isPlacingOrder = checkout.isSubmitting || _isNavigatingToConfirmed;
+    final isPlacingOrder = _isSubmittingLocally || checkout.isSubmitting || _isNavigatingToConfirmed;
 
-    if (!cart.isEmpty) {
+    if (cart.totalUnits > 0) {
       _lastTotalUnits = cart.totalUnits;
       _lastFormattedSubtotal = cart.formattedSubtotal;
       _lastFormattedDeliveryFee = cart.formattedDeliveryFee;
       _lastFormattedTotal = cart.formattedTotal;
     }
 
-    final displayTotalUnits = cart.isEmpty && isPlacingOrder ? _lastTotalUnits : cart.totalUnits;
-    final displaySubtotal = cart.isEmpty && isPlacingOrder ? _lastFormattedSubtotal : cart.formattedSubtotal;
-    final displayDeliveryFee = cart.isEmpty && isPlacingOrder ? _lastFormattedDeliveryFee : cart.formattedDeliveryFee;
-    final displayTotal = cart.isEmpty && isPlacingOrder ? _lastFormattedTotal : cart.formattedTotal;
+    final displayTotalUnits = cart.totalUnits == 0 && isPlacingOrder ? _lastTotalUnits : cart.totalUnits;
+    final displaySubtotal = cart.totalUnits == 0 && isPlacingOrder ? _lastFormattedSubtotal : cart.formattedSubtotal;
+    final displayDeliveryFee = cart.totalUnits == 0 && isPlacingOrder ? _lastFormattedDeliveryFee : cart.formattedDeliveryFee;
+    final displayTotal = cart.totalUnits == 0 && isPlacingOrder ? _lastFormattedTotal : cart.formattedTotal;
 
     return Scaffold(
       appBar: AppBar(
@@ -970,7 +975,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               CustomButton(
                 text: 'Confirm & Place Order',
                 isLoading: isPlacingOrder,
-                onPressed: _handlePlaceOrder,
+                onPressed: isPlacingOrder ? null : _handlePlaceOrder,
               ),
             ],
           ),

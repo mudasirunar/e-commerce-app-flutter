@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/product.dart';
@@ -9,6 +10,7 @@ import '../../widgets/catalog/stock_badge.dart';
 import '../../widgets/common/app_confirmation_dialog.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/quantity_stepper.dart';
+import '../../utils/app_config.dart';
 import '../auth/login_screen.dart';
 import '../cart/cart_screen.dart';
 
@@ -25,7 +27,18 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _selectedQuantity = 1;
-  bool _isAdding = false;
+  bool _isAdded = false;
+  Timer? _resetTimer;
+  Timer? _snackBarTimer;
+  ScaffoldMessengerState? _messenger;
+
+  @override
+  void dispose() {
+    _resetTimer?.cancel();
+    _snackBarTimer?.cancel();
+    _messenger?.clearSnackBars();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,18 +53,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     final canAddToCart = liveProduct.isInStock && liveProduct.isActive;
     final maxQuantity = liveProduct.stockQuantity > 0 ? liveProduct.stockQuantity : 1;
 
+    // Watch cart provider for real-time item count badge
+    final cart = context.watch<CartProvider>();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(liveProduct.name),
         actions: [
           IconButton(
-            icon: const Icon(Icons.shopping_bag_outlined),
+            tooltip: 'Shopping Bag',
+            icon: Badge(
+              isLabelVisible: cart.totalUnits > 0,
+              label: Text('${cart.totalUnits}'),
+              backgroundColor: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
+              textColor: isDark ? Colors.black : Colors.white,
+              child: const Icon(Icons.shopping_bag_outlined),
+            ),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const CartScreen()),
               );
             },
           ),
+          const SizedBox(width: AppTheme.space8),
         ],
       ),
       body: SingleChildScrollView(
@@ -201,11 +225,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         child: SafeArea(
           child: CustomButton(
-            text: canAddToCart
-                ? 'Add to Bag  •  ${liveProduct.formattedPrice}'
-                : 'Currently Unavailable',
-            isLoading: _isAdding,
-            onPressed: canAddToCart ? () => _handleAddToCart(liveProduct) : null,
+            text: _isAdded
+                ? 'Added to Bag'
+                : (canAddToCart
+                    ? 'Add to Bag  •  ${liveProduct.formattedPrice}'
+                    : 'Currently Unavailable'),
+            icon: _isAdded ? Icons.check_circle_rounded : null,
+            onPressed: canAddToCart && !_isAdded ? () => _handleAddToCart(liveProduct) : null,
           ),
         ),
       ),
@@ -232,37 +258,88 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return;
     }
 
-    setState(() => _isAdding = true);
     final cart = context.read<CartProvider>();
-    final success = await cart.addToCart(product, quantity: _selectedQuantity);
+    final currentQty = cart.getQuantity(product.productId);
+    final targetQty = currentQty + _selectedQuantity;
 
-    if (mounted) {
-      setState(() => _isAdding = false);
-
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Added $_selectedQuantity item(s) to your bag'),
-            action: SnackBarAction(
-              label: 'View Bag',
-              textColor: AppTheme.lightAccent,
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CartScreen()),
-                );
-              },
-            ),
-          ),
-        );
-      } else if (cart.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(cart.errorMessage!),
-            backgroundColor: AppTheme.error,
-          ),
-        );
-      }
+    if (targetQty > AppConfig.maxCartItemQuantity) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Maximum ${AppConfig.maxCartItemQuantity} units allowed per product.'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
     }
+
+    if (targetQty > product.stockQuantity) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Only ${product.stockQuantity} units available in stock.'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    // 1. Instantaneous UI feedback on button (0ms)
+    setState(() => _isAdded = true);
+    _resetTimer?.cancel();
+    _resetTimer = Timer(const Duration(milliseconds: 1400), () {
+      if (mounted) setState(() => _isAdded = false);
+    });
+
+    // 2. Instantaneous SnackBar display (0ms - zero network latency wait)
+    final messenger = ScaffoldMessenger.of(context);
+    _messenger = messenger;
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('Added $_selectedQuantity item(s) to your bag'),
+        duration: const Duration(milliseconds: 1800),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'View Bag',
+          textColor: AppTheme.lightAccent,
+          onPressed: () {
+            messenger.clearSnackBars();
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CartScreen()),
+            );
+          },
+        ),
+      ),
+    );
+
+    _snackBarTimer?.cancel();
+    _snackBarTimer = Timer(const Duration(milliseconds: 1800), () {
+      messenger.clearSnackBars();
+    });
+
+    // 3. Dispatch cart addition concurrently in background
+    cart.addToCart(product, quantity: _selectedQuantity).then((success) {
+      if (!mounted) return;
+      if (!success) {
+        _resetTimer?.cancel();
+        setState(() => _isAdded = false);
+
+        if (cart.errorMessage != null) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(cart.errorMessage!),
+              backgroundColor: AppTheme.error,
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    });
   }
 
   Widget _buildImagePlaceholder(bool isDark) {

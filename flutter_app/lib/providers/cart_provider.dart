@@ -29,6 +29,9 @@ class CartProvider extends ChangeNotifier {
   /// Number of distinct product lines in the cart.
   int get itemCount => _items.length;
 
+  /// Returns current quantity of a specific product in the cart.
+  int getQuantity(String productId) => _items[productId]?.quantity ?? 0;
+
   /// Total physical units in the cart.
   int get totalUnits => _items.values.fold(0, (sum, item) => sum + item.quantity);
 
@@ -224,10 +227,10 @@ class CartProvider extends ChangeNotifier {
   /// Clears all items in the cart.
   Future<void> clearCart() async {
     if (_userId == null) return;
+    _items = {};
+    notifyListeners();
     try {
       await _firestoreService.clearCart(_userId!);
-      _items = {};
-      notifyListeners();
     } catch (e) {
       _errorMessage = 'Failed to clear cart.';
       notifyListeners();
