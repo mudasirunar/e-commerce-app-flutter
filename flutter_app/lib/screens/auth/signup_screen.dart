@@ -23,6 +23,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _signupError;
 
   @override
   void dispose() {
@@ -33,10 +34,25 @@ class _SignupScreenState extends State<SignupScreen> {
     super.dispose();
   }
 
+  void _clearErrors() {
+    if (_signupError != null) {
+      setState(() => _signupError = null);
+    }
+    if (mounted) {
+      final auth = context.read<AuthProvider>();
+      if (auth.errorMessage != null) {
+        auth.clearError();
+      }
+    }
+  }
+
   Future<void> _handleSignup() async {
+    setState(() => _signupError = null);
+    final auth = context.read<AuthProvider>();
+    auth.clearError();
+
     if (!_formKey.currentState!.validate()) return;
 
-    final auth = context.read<AuthProvider>();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final name = _nameController.text.trim();
@@ -48,6 +64,7 @@ class _SignupScreenState extends State<SignupScreen> {
     );
 
     if (success && mounted) {
+      auth.clearError();
       // Send email verification OTP in the background via Brevo
       try {
         final authApi = context.read<AuthApiService>();
@@ -66,6 +83,11 @@ class _SignupScreenState extends State<SignupScreen> {
       if (mounted) {
         Navigator.of(context).pop();
       }
+    } else if (mounted) {
+      final msg = auth.errorMessage ?? 'Failed to create account.';
+      setState(() {
+        _signupError = msg;
+      });
     }
   }
 
@@ -74,6 +96,7 @@ class _SignupScreenState extends State<SignupScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final auth = context.watch<AuthProvider>();
+    final displayedError = _signupError ?? auth.errorMessage;
 
     return Scaffold(
       appBar: AppBar(
@@ -106,7 +129,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     const SizedBox(height: AppTheme.space32),
 
-                    if (auth.errorMessage != null) ...[
+                    if (displayedError != null) ...[
                       Container(
                         padding: const EdgeInsets.all(AppTheme.space12),
                         decoration: BoxDecoration(
@@ -120,7 +143,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             const SizedBox(width: AppTheme.space8),
                             Expanded(
                               child: Text(
-                                auth.errorMessage!,
+                                displayedError,
                                 style: const TextStyle(
                                   color: AppTheme.error,
                                   fontSize: 13,
@@ -139,6 +162,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       label: 'Full Name',
                       hint: 'Ali Khan',
                       prefixIcon: Icons.person_outline_rounded,
+                      onChanged: (val) => _clearErrors(),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Please enter your full name';
@@ -154,6 +178,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       hint: 'name@example.com',
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: Icons.email_outlined,
+                      onChanged: (val) => _clearErrors(),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Please enter your email';
@@ -172,6 +197,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       hint: '••••••••',
                       obscureText: _obscurePassword,
                       prefixIcon: Icons.lock_outline_rounded,
+                      onChanged: (val) => _clearErrors(),
                       suffix: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -197,6 +223,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       hint: '••••••••',
                       obscureText: _obscurePassword,
                       prefixIcon: Icons.lock_outline_rounded,
+                      onChanged: (val) => _clearErrors(),
                       validator: (value) {
                         if (value != _passwordController.text) {
                           return 'Passwords do not match';
@@ -225,6 +252,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
+                            context.read<AuthProvider>().clearError();
                             Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
                                 builder: (_) => const LoginScreen(),

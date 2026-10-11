@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _loginError;
 
   @override
   void dispose() {
@@ -28,17 +29,38 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _clearErrors() {
+    if (_loginError != null) {
+      setState(() => _loginError = null);
+    }
+    if (mounted) {
+      final auth = context.read<AuthProvider>();
+      if (auth.errorMessage != null) {
+        auth.clearError();
+      }
+    }
+  }
+
   Future<void> _handleLogin() async {
+    setState(() => _loginError = null);
+    final auth = context.read<AuthProvider>();
+    auth.clearError();
+
     if (!_formKey.currentState!.validate()) return;
 
-    final auth = context.read<AuthProvider>();
     final success = await auth.signInWithEmail(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
 
     if (success && mounted) {
+      auth.clearError();
       Navigator.of(context).pop();
+    } else if (mounted) {
+      final msg = auth.errorMessage ?? 'Invalid email or password.';
+      setState(() {
+        _loginError = msg;
+      });
     }
   }
 
@@ -47,6 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final auth = context.watch<AuthProvider>();
+    final displayedError = _loginError ?? auth.errorMessage;
 
     return Scaffold(
       appBar: AppBar(
@@ -80,8 +103,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: AppTheme.space32),
 
-                    // Error banner if any
-                    if (auth.errorMessage != null) ...[
+                    // Invalid credentials banner
+                    if (displayedError != null) ...[
                       Container(
                         padding: const EdgeInsets.all(AppTheme.space12),
                         decoration: BoxDecoration(
@@ -95,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(width: AppTheme.space8),
                             Expanded(
                               child: Text(
-                                auth.errorMessage!,
+                                displayedError,
                                 style: const TextStyle(
                                   color: AppTheme.error,
                                   fontSize: 13,
@@ -116,6 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       hint: 'name@example.com',
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: Icons.email_outlined,
+                      onChanged: (val) => _clearErrors(),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Please enter your email';
@@ -135,6 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       hint: '••••••••',
                       obscureText: _obscurePassword,
                       prefixIcon: Icons.lock_outline_rounded,
+                      onChanged: (val) => _clearErrors(),
                       suffix: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
@@ -160,6 +185,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
+                          context.read<AuthProvider>().clearError();
+                          setState(() => _loginError = null);
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => ForgotPasswordScreen(
@@ -203,6 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         GestureDetector(
                           onTap: () {
+                            context.read<AuthProvider>().clearError();
                             Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
                                 builder: (_) => const SignupScreen(),

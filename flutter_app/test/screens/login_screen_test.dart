@@ -36,6 +36,14 @@ class TestAuthProvider extends ChangeNotifier implements AuthProvider {
   UserProfile? get userProfile => null;
 
   @override
+  void clearError() {
+    if (errorMessage != null) {
+      errorMessage = null;
+      notifyListeners();
+    }
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 
   String? submittedEmail;
