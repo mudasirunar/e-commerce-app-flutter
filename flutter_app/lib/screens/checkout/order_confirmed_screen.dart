@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/order.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/custom_button.dart';
+import '../../widgets/navigation/app_navigation_shell.dart';
 import '../orders/order_detail_screen.dart';
 
 /// Screen displayed immediately following confirmed server checkout.
@@ -19,6 +20,7 @@ class OrderConfirmedScreen extends StatelessWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
+          AppNavigationShell.globalTabNotifier.value = 0;
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       },
@@ -166,6 +168,7 @@ class OrderConfirmedScreen extends StatelessWidget {
                       text: 'Continue Shopping',
                       variant: ButtonVariant.secondary,
                       onPressed: () {
+                        AppNavigationShell.globalTabNotifier.value = 0;
                         Navigator.of(context).popUntil((route) => route.isFirst);
                       },
                     ),
