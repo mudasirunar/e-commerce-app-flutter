@@ -5,3 +5,4 @@ export 'cart_provider.dart';
 export 'checkout_provider.dart';
 export 'order_provider.dart';
 export 'admin_provider.dart';
+export 'address_provider.dart';

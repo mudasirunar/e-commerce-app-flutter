@@ -84,6 +84,17 @@ class FirestoreService {
     });
   }
 
+  /// Updates allowed display name on user profile.
+  Future<void> updateDisplayName({
+    required String uid,
+    required String name,
+  }) async {
+    await _db.collection('users').doc(uid).update({
+      'name': name.trim(),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
   // ==================== CATEGORIES ====================
 
   /// Fetches active categories sorted by sortOrder.

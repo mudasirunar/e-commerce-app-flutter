@@ -60,6 +60,12 @@ void main() async {
               (admin ?? AdminProvider(firestoreService, adminApiService))
                 ..updateAdminState(auth.isAdmin),
         ),
+        ChangeNotifierProxyProvider<AuthProvider, AddressProvider>(
+          create: (_) => AddressProvider(firestoreService, localStorageService),
+          update: (_, auth, addresses) =>
+              (addresses ?? AddressProvider(firestoreService, localStorageService))
+                ..updateAuth(auth.uid, auth.profile),
+        ),
       ],
       child: const EcommerceApp(),
     ),

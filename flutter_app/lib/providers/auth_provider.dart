@@ -5,6 +5,7 @@ import '../models/delivery_info.dart';
 import '../models/user_profile.dart';
 import '../services/auth/auth_service.dart';
 import '../services/firestore/firestore_service.dart';
+import '../utils/phone_formatter.dart';
 
 /// Provider managing authentication state, session restoration, and user profile sync.
 class AuthProvider extends ChangeNotifier {
@@ -175,7 +176,7 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(false);
   }
 
-  /// Updates allowed profile delivery information.
+  /// Updates allowed profile delivery information with E.164 phone normalization.
   Future<bool> updateDeliveryProfile({
     String? defaultAddress,
     String? phone,
@@ -186,15 +187,56 @@ class AuthProvider extends ChangeNotifier {
     final ph = defaultDeliveryInfo != null ? defaultDeliveryInfo.phone : phone;
     if (addr == null || ph == null) return false;
 
+    final normalizedPhone = PhoneFormatter.normalizeToE164(ph);
+
     try {
       await _firestoreService.updateDeliveryProfile(
         uid: _user!.uid,
-        defaultAddress: addr,
-        phone: ph,
+        defaultAddress: addr.trim(),
+        phone: normalizedPhone,
       );
+      if (_profile != null) {
+        _profile = _profile!.copyWith(
+          defaultAddress: addr.trim(),
+          phone: normalizedPhone,
+        );
+      }
       return true;
     } catch (e) {
       _errorMessage = 'Failed to update delivery address.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Updates user display name both in Firestore profile and FirebaseAuth.
+  Future<bool> updateDisplayName(String newName) async {
+    if (_user == null) return false;
+    final trimmedName = newName.trim();
+    if (trimmedName.length < 2) {
+      _errorMessage = 'Name must be at least 2 characters.';
+      notifyListeners();
+      return false;
+    }
+
+    try {
+      await _firestoreService.updateDisplayName(
+        uid: _user!.uid,
+        name: trimmedName,
+      );
+      try {
+        await _user!.updateDisplayName(trimmedName);
+      } catch (_) {
+        // Non-fatal if local Auth credential cache lags
+      }
+      if (_profile != null) {
+        _profile = _profile!.copyWith(name: trimmedName);
+      }
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to update display name.';
       notifyListeners();
       return false;
     }

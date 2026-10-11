@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -59,5 +60,26 @@ class LocalStorageService {
   /// Clears the active checkout attempt ID upon confirmed completion.
   Future<bool> clearLatestAttemptId() async {
     return await _prefs.remove(_keyLatestAttemptId);
+  }
+
+  // ==================== SAVED ADDRESSES ====================
+
+  /// Loads saved addresses list for a specific user uid.
+  List<Map<String, dynamic>> getSavedAddresses(String uid) {
+    final raw = _prefs.getString('user_addresses_$uid');
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  /// Persists saved addresses list for a specific user uid.
+  Future<bool> saveAddresses(String uid, List<Map<String, dynamic>> addresses) async {
+    final encoded = jsonEncode(addresses);
+    return await _prefs.setString('user_addresses_$uid', encoded);
   }
 }
