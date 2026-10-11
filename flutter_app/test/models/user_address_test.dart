@@ -8,7 +8,7 @@ void main() {
       const address = UserAddress(
         id: 'addr_1',
         label: 'Work',
-        fullName: 'Mudasir Unar',
+        fullName: 'Ali Khan',
         phone: '03001234567',
         address: 'Office 402, Business Tower',
         city: 'Karachi',
@@ -18,7 +18,7 @@ void main() {
       final map = address.toMap();
       expect(map['id'], 'addr_1');
       expect(map['label'], 'Work');
-      expect(map['fullName'], 'Mudasir Unar');
+      expect(map['fullName'], 'Ali Khan');
       expect(map['phone'], '03001234567');
       expect(map['isDefault'], isTrue);
 

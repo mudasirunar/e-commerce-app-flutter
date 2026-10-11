@@ -27,7 +27,7 @@ void main() {
       subtotalMinor: 4500000,
       deliveryFeeMinor: 0,
       totalMinor: 4500000,
-      deliveryName: 'Mudasir Unar',
+      deliveryName: 'Ali Khan',
       deliveryPhone: '03001234567',
       deliveryAddress: 'House 1, Street 2, Karachi',
       status: status,
@@ -58,7 +58,7 @@ void main() {
 
       expect(find.text('Order #ORD_1234'), findsOneWidget);
       expect(find.text('Walnut Armchair'), findsOneWidget);
-      expect(find.text('Mudasir Unar'), findsOneWidget);
+      expect(find.text('Ali Khan'), findsOneWidget);
       expect(find.text('03001234567'), findsOneWidget);
       expect(find.text('Cancel Order'), findsOneWidget);
     });

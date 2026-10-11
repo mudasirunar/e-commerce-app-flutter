@@ -55,7 +55,7 @@ void main() {
       addressProvider.updateAuth('user_123', null);
       await addressProvider.addAddress(
         label: 'Home',
-        fullName: 'Mudasir Unar',
+        fullName: 'Ali Khan',
         phone: '03001234567',
         address: 'House 12, Street 3',
         city: 'Karachi',
@@ -63,7 +63,7 @@ void main() {
       );
       await addressProvider.addAddress(
         label: 'Office',
-        fullName: 'Mudasir Work',
+        fullName: 'John Office',
         phone: '03009999999',
         address: 'Tower 4, Tech Zone',
         city: 'Islamabad',
@@ -75,8 +75,8 @@ void main() {
 
       expect(find.text('Home'), findsOneWidget);
       expect(find.text('Office'), findsOneWidget);
-      expect(find.text('Mudasir Unar'), findsOneWidget);
-      expect(find.text('Mudasir Work'), findsOneWidget);
+      expect(find.text('Ali Khan'), findsOneWidget);
+      expect(find.text('John Office'), findsOneWidget);
       expect(find.text('DEFAULT'), findsOneWidget);
       expect(find.text('Set as Default'), findsOneWidget);
     });
@@ -146,6 +146,34 @@ void main() {
       );
       expect(updatedWorkChip.selected, true);
       expect(updatedWorkChip.showCheckmark, false);
+    });
+
+    testWidgets('displays 5 of 5 saved indicator and full banner when limit reached', (tester) async {
+      addressProvider.updateAuth('user_123', null);
+      for (int i = 1; i <= 5; i++) {
+        await addressProvider.addAddress(
+          label: 'Addr $i',
+          fullName: 'Recipient $i',
+          phone: '0300123456$i',
+          address: 'Street $i, Block $i',
+        );
+      }
+
+      await tester.pumpWidget(buildTestableAddressesScreen(addressProvider: addressProvider));
+      await tester.pumpAndSettle();
+
+      expect(find.text('5 of 5 saved'), findsOneWidget);
+      expect(find.text('Address Book Full (5 of 5 Saved)'), findsOneWidget);
+
+      // Tapping the full banner displays snackbar informing maximum reached
+      final fullBanner = find.text('Address Book Full (5 of 5 Saved)');
+      await tester.tap(fullBanner);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Maximum of 5 saved addresses reached. Please edit or delete an existing address.'),
+        findsOneWidget,
+      );
     });
   });
 }

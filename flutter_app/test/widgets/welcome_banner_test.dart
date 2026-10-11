@@ -28,7 +28,7 @@ void main() {
     testWidgets('extracts and shows only first name when full name is passed', (tester) async {
       const bannerData = WelcomeBannerData(
         isNewSignup: false,
-        name: 'Mudasir Unar',
+        name: 'John Doe',
         isAdmin: false,
       );
 
@@ -40,8 +40,8 @@ void main() {
         ),
       );
 
-      expect(find.text('Welcome back, Mudasir!'), findsOneWidget);
-      expect(find.textContaining('Unar'), findsNothing);
+      expect(find.text('Welcome back, John!'), findsOneWidget);
+      expect(find.textContaining('Doe'), findsNothing);
     });
 
     testWidgets('renders customer returning sign in banner', (tester) async {

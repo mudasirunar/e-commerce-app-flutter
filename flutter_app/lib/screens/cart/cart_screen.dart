@@ -190,14 +190,22 @@ class _CartScreenState extends State<CartScreen> {
     final canCheckout =
         !cart.isEmpty && !cart.hasStockErrors && !cart.hasUnavailableItems;
     final hasBottomBar = ShellNavigationScope.hasBottomBarOf(context);
-    final bottomPadding = hasBottomBar ? 80.0 : AppTheme.space20;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
+    // The floating bottom bar dock height is 66.0 and its bottom margin is (bottomInset * 0.45).
+    // To match Home/Catalog spacing above the bottom bar, we position the CTA with ~12px gap.
+    final dockBottomPadding = bottomInset > 0 ? (bottomInset * 0.45) : 8.0;
+    final dockTop = 66.0 + dockBottomPadding;
+    final summaryBottomPadding = hasBottomBar
+        ? (dockTop + 12.0)
+        : (bottomInset > 0 ? (bottomInset + 8.0) : 14.0);
 
     return Container(
       padding: EdgeInsets.fromLTRB(
         AppTheme.space20,
+        AppTheme.space16,
         AppTheme.space20,
-        AppTheme.space20,
-        bottomPadding,
+        summaryBottomPadding,
       ),
       decoration: BoxDecoration(
         color: isDark ? AppTheme.darkSurface : AppTheme.lightBackground,
@@ -209,6 +217,8 @@ class _CartScreenState extends State<CartScreen> {
         ),
       ),
       child: SafeArea(
+        top: false,
+        bottom: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,

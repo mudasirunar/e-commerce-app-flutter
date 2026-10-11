@@ -19,8 +19,11 @@ class AddressProvider extends ChangeNotifier {
 
   AddressProvider(this._firestoreService, this._localStorageService);
 
+  static const int maxAddresses = 5;
+
   List<UserAddress> get addresses => List.unmodifiable(_addresses);
   int get addressesCount => _addresses.length;
+  bool get canAddAddress => _addresses.length < maxAddresses;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -79,8 +82,44 @@ class AddressProvider extends ChangeNotifier {
       _syncDefaultToFirestore(loaded.first);
     }
 
+    // Enforce max 5 limit
+    if (loaded.length > maxAddresses) {
+      loaded.removeRange(maxAddresses, loaded.length);
+      _persistAddresses(loaded);
+    }
+
     _addresses = loaded;
     notifyListeners();
+
+    // Sync with remote Firestore subcollection
+    _syncRemoteAddresses(_userId!);
+  }
+
+  Future<void> _syncRemoteAddresses(String uid) async {
+    try {
+      final remoteList = await _firestoreService.getUserAddresses(uid);
+      if (remoteList.isNotEmpty) {
+        final trimmed = remoteList.take(maxAddresses).toList();
+        // Ensure single-default rule
+        if (trimmed.where((a) => a.isDefault).length != 1) {
+          final first = trimmed.first.copyWith(isDefault: true);
+          final rest = trimmed.skip(1).map((a) => a.copyWith(isDefault: false)).toList();
+          trimmed.clear();
+          trimmed.add(first);
+          trimmed.addAll(rest);
+        }
+        _addresses = trimmed;
+        await _persistAddresses(trimmed);
+        notifyListeners();
+      } else if (_addresses.isNotEmpty) {
+        // Sync existing local addresses to Firestore
+        for (final addr in _addresses) {
+          await _firestoreService.saveUserAddress(uid, addr);
+        }
+      }
+    } catch (e) {
+      debugPrint('Firestore remote addresses sync notice: $e');
+    }
   }
 
   static int _idCounter = 0;
@@ -97,6 +136,12 @@ class AddressProvider extends ChangeNotifier {
   }) async {
     _errorMessage = null;
     final normalizedPhone = PhoneFormatter.normalizeToE164(phone);
+
+    if (_addresses.length >= maxAddresses) {
+      _errorMessage = 'Maximum of $maxAddresses saved addresses reached.';
+      notifyListeners();
+      return false;
+    }
 
     if (fullName.trim().length < 2) {
       _errorMessage = 'Please enter recipient name (at least 2 characters).';
@@ -142,6 +187,21 @@ class AddressProvider extends ChangeNotifier {
 
       await _persistAddresses(updatedList);
       _addresses = updatedList;
+
+      if (_userId != null) {
+        try {
+          if (shouldBeDefault) {
+            for (final a in updatedList) {
+              if (a.id != newAddress.id) {
+                await _firestoreService.saveUserAddress(_userId!, a);
+              }
+            }
+          }
+          await _firestoreService.saveUserAddress(_userId!, newAddress);
+        } catch (e) {
+          debugPrint('Remote address write note: $e');
+        }
+      }
 
       if (shouldBeDefault) {
         await _syncDefaultToFirestore(newAddress);
@@ -217,6 +277,23 @@ class AddressProvider extends ChangeNotifier {
       await _persistAddresses(updatedList);
       _addresses = updatedList;
 
+      if (_userId != null) {
+        try {
+          if (shouldBeDefault) {
+            for (final a in updatedList) {
+              if (a.id != id) {
+                await _firestoreService.saveUserAddress(_userId!, a);
+              }
+            }
+          }
+          if (updatedTarget != null) {
+            await _firestoreService.saveUserAddress(_userId!, updatedTarget);
+          }
+        } catch (e) {
+          debugPrint('Remote address update note: $e');
+        }
+      }
+
       if (shouldBeDefault && updatedTarget != null) {
         await _syncDefaultToFirestore(updatedTarget);
       }
@@ -260,6 +337,17 @@ class AddressProvider extends ChangeNotifier {
 
       await _persistAddresses(updatedList);
       _addresses = updatedList;
+
+      if (_userId != null) {
+        try {
+          for (final a in updatedList) {
+            await _firestoreService.saveUserAddress(_userId!, a);
+          }
+        } catch (e) {
+          debugPrint('Remote address setDefault note: $e');
+        }
+      }
+
       await _syncDefaultToFirestore(selectedDefault);
 
       _isLoading = false;
@@ -301,6 +389,17 @@ class AddressProvider extends ChangeNotifier {
 
       await _persistAddresses(updatedList);
       _addresses = updatedList;
+
+      if (_userId != null) {
+        try {
+          await _firestoreService.deleteUserAddress(_userId!, id);
+          if (wasDefault && updatedList.isNotEmpty) {
+            await _firestoreService.saveUserAddress(_userId!, updatedList.first);
+          }
+        } catch (e) {
+          debugPrint('Remote address delete note: $e');
+        }
+      }
 
       _isLoading = false;
       notifyListeners();

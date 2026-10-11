@@ -29,13 +29,36 @@ class _AddressesScreenState extends State<AddressesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Delivery Addresses'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Delivery Addresses'),
+            if (addresses.isNotEmpty)
+              Text(
+                '${addresses.length} of ${AddressProvider.maxAddresses} saved',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.normal,
+                  color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                ),
+              ),
+          ],
+        ),
         actions: [
           if (addresses.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.add_rounded),
-              tooltip: 'Add Address',
-              onPressed: () => _openAddressSheet(context),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: IconButton(
+                icon: Icon(
+                  Icons.add_rounded,
+                  color: addressProvider.canAddAddress
+                      ? null
+                      : (isDark ? AppTheme.darkTextSecondary.withValues(alpha: 0.4) : AppTheme.lightTextSecondary.withValues(alpha: 0.4)),
+                ),
+                tooltip: addressProvider.canAddAddress ? 'Add Address' : 'Max 5 Addresses Saved',
+                onPressed: () => _openAddressSheet(context),
+              ),
             ),
         ],
       ),
@@ -74,11 +97,46 @@ class _AddressesScreenState extends State<AddressesScreen> {
                 ),
               ),
               child: SafeArea(
-                child: CustomButton(
-                  text: 'Add New Address',
-                  icon: Icons.add_rounded,
-                  onPressed: () => _openAddressSheet(context),
-                ),
+                child: addressProvider.canAddAddress
+                    ? CustomButton(
+                        text: 'Add New Address',
+                        icon: Icons.add_rounded,
+                        onPressed: () => _openAddressSheet(context),
+                      )
+                    : InkWell(
+                        onTap: () => _openAddressSheet(context),
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF27272A) : const Color(0xFFF4EFEA),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.lock_outline_rounded,
+                                size: 16,
+                                color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Address Book Full (5 of 5 Saved)',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
               ),
             )
           : null,
@@ -300,6 +358,19 @@ class _AddressesScreenState extends State<AddressesScreen> {
   }
 
   void _openAddressSheet(BuildContext context, {UserAddress? existing}) {
+    final addressProvider = context.read<AddressProvider>();
+    if (existing == null && !addressProvider.canAddAddress) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Maximum of 5 saved addresses reached. Please edit or delete an existing address.',
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -324,12 +395,11 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _addressController;
-  late String _city;
+  late final TextEditingController _cityController;
   late bool _isDefault;
   bool _isSaving = false;
 
   final List<String> _labels = ['Home', 'Work', 'Other'];
-  final List<String> _cities = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Peshawar', 'Quetta', 'Multan'];
 
   @override
   void initState() {
@@ -341,7 +411,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
       text: item != null ? PhoneFormatter.formatDisplay(item.phone) : '',
     );
     _addressController = TextEditingController(text: item?.address ?? '');
-    _city = item?.city ?? 'Karachi';
+    _cityController = TextEditingController(text: item?.city ?? 'Karachi');
     _isDefault = item?.isDefault ?? false;
   }
 
@@ -350,6 +420,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
     _nameController.dispose();
     _phoneController.dispose();
     _addressController.dispose();
+    _cityController.dispose();
     super.dispose();
   }
 
@@ -467,7 +538,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
               CustomTextField(
                 controller: _nameController,
                 label: 'Recipient Full Name',
-                hint: 'e.g. Mudasir Unar',
+                hint: 'e.g. Ali Khan',
                 validator: (val) {
                   if (val == null || val.trim().length < 2) {
                     return 'Please enter recipient name (at least 2 letters)';
@@ -510,36 +581,19 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
               ),
               const SizedBox(height: AppTheme.space12),
 
-              // City Dropdown
-              Text(
-                'City',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              DropdownButtonFormField<String>(
-                initialValue: _cities.contains(_city) ? _city : _cities.first,
-                dropdownColor: isDark ? const Color(0xFF262626) : Colors.white,
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                    borderSide: BorderSide(
-                      color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder,
-                    ),
-                  ),
-                ),
-                items: _cities
-                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _city = val);
+              CustomTextField(
+                controller: _cityController,
+                label: 'City',
+                hint: 'e.g. Karachi, Lahore, Islamabad',
+                prefixIcon: Icons.location_city_outlined,
+                validator: (val) {
+                  if (val == null || val.trim().length < 2) {
+                    return 'Please enter city (min 2 characters)';
+                  }
+                  return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppTheme.space12),
 
               // Default Address switch
               Container(
@@ -660,7 +714,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
         fullName: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
         address: _addressController.text.trim(),
-        city: _city,
+        city: _cityController.text.trim(),
         isDefault: _isDefault,
       );
     } else {
@@ -669,7 +723,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
         fullName: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
         address: _addressController.text.trim(),
-        city: _city,
+        city: _cityController.text.trim(),
         isDefault: _isDefault,
       );
     }

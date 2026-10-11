@@ -48,12 +48,15 @@ class OrderItemSnapshot {
   String get formattedSubtotal => MoneyFormatter.format(subtotalMinor);
 
   factory OrderItemSnapshot.fromMap(Map<String, dynamic> data) {
+    final image = (data['imageUrlSnapshot'] as String?)?.trim() ??
+        (data['imageUrl'] as String?)?.trim() ??
+        (data['image'] as String?)?.trim();
     return OrderItemSnapshot(
       productId: (data['productId'] as String?)?.trim() ?? '',
       nameSnapshot: (data['nameSnapshot'] as String?)?.trim() ?? '',
       unitPriceMinorSnapshot: (data['unitPriceMinorSnapshot'] as num?)?.toInt() ?? 0,
       quantity: (data['quantity'] as num?)?.toInt() ?? 1,
-      imageUrlSnapshot: (data['imageUrlSnapshot'] as String?)?.trim(),
+      imageUrlSnapshot: (image != null && image.isNotEmpty) ? image : null,
     );
   }
 

@@ -17,9 +17,9 @@ class MockAuthProvider extends ChangeNotifier implements AuthProvider {
   @override
   bool isAdmin = false;
   @override
-  String displayName = 'Mudasir Unar';
+  String displayName = 'Ali Khan';
   @override
-  String email = 'mudasir@example.com';
+  String email = 'alex@example.com';
   @override
   String uid = 'uid_123';
   @override
@@ -69,7 +69,7 @@ class MockAddressProvider extends ChangeNotifier implements AddressProvider {
   UserAddress? defaultAddress = const UserAddress(
     id: 'addr_1',
     label: 'Home',
-    fullName: 'Mudasir',
+    fullName: 'Ali Khan',
     phone: '03001234567',
     address: 'Clifton Block 2',
     isDefault: true,
@@ -147,8 +147,8 @@ void main() {
       await tester.pumpAndSettle();
 
       // Header
-      expect(find.text('Mudasir Unar'), findsOneWidget);
-      expect(find.text('mudasir@example.com'), findsOneWidget);
+      expect(find.text('Ali Khan'), findsOneWidget);
+      expect(find.text('alex@example.com'), findsOneWidget);
 
       // Bento cards
       expect(find.text('Shopping Bag'), findsOneWidget);
@@ -167,7 +167,7 @@ void main() {
       final activeOrder = OrderModel(
         orderId: 'ord_12345678',
         userId: 'uid_123',
-        deliveryName: 'Mudasir',
+        deliveryName: 'Ali Khan',
         deliveryPhone: '+923001234567',
         deliveryAddress: 'Clifton',
         status: OrderStatus.processing,
@@ -204,11 +204,84 @@ void main() {
       expect(find.text('Track Order'), findsOneWidget);
     });
 
+    testWidgets('multiple active orders render in PageView carousel and swipe smoothly on mobile viewport', (tester) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      final order1 = OrderModel(
+        orderId: 'ord_11111111',
+        userId: 'uid_123',
+        deliveryName: 'Ali Khan',
+        deliveryPhone: '+923001234567',
+        deliveryAddress: 'Clifton',
+        status: OrderStatus.processing,
+        subtotalMinor: 450000,
+        deliveryFeeMinor: 0,
+        totalMinor: 450000,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        items: const [
+          OrderItemSnapshot(
+            productId: 'prod_1',
+            nameSnapshot: 'Premium Leather Shoes',
+            unitPriceMinorSnapshot: 450000,
+            quantity: 1,
+          ),
+        ],
+      );
+
+      final order2 = OrderModel(
+        orderId: 'ord_22222222',
+        userId: 'uid_123',
+        deliveryName: 'Ali Khan',
+        deliveryPhone: '+923001234567',
+        deliveryAddress: 'DHA',
+        status: OrderStatus.shipped,
+        subtotalMinor: 300000,
+        deliveryFeeMinor: 20000,
+        totalMinor: 320000,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        items: const [
+          OrderItemSnapshot(
+            productId: 'prod_2',
+            nameSnapshot: 'Silk Scarf',
+            unitPriceMinorSnapshot: 300000,
+            quantity: 1,
+          ),
+        ],
+      );
+
+      mockOrder.orders = [order1, order2];
+
+      await tester.pumpWidget(buildProfileScreenWidget(
+        auth: mockAuth,
+        cart: mockCart,
+        orderProvider: mockOrder,
+        addressProvider: mockAddress,
+        themeProvider: mockTheme,
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Active Deliveries'), findsOneWidget);
+      expect(find.text('2 in progress'), findsOneWidget);
+      expect(find.text('#ORD_1111'), findsOneWidget);
+      expect(find.byType(PageView), findsOneWidget);
+
+      // Swipe to second order
+      await tester.drag(find.byType(PageView), const Offset(-300, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('#ORD_2222'), findsOneWidget);
+      expect(find.text('SHIPPED'), findsOneWidget);
+    });
+
     testWidgets('delivered and cancelled orders do NOT show in active carousel', (tester) async {
       final deliveredOrder = OrderModel(
         orderId: 'ord_delivered',
         userId: 'uid_123',
-        deliveryName: 'Mudasir',
+        deliveryName: 'Ali Khan',
         deliveryPhone: '+923001234567',
         deliveryAddress: 'Clifton',
         status: OrderStatus.delivered,
@@ -261,21 +334,21 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap on display name to open dialog
-      await tester.tap(find.text('Mudasir Unar'));
+      await tester.tap(find.text('Ali Khan'));
       await tester.pumpAndSettle();
 
       expect(find.text('Edit Display Name'), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
 
       // Enter new name
-      await tester.enterText(find.byType(TextField), 'Mudasir Ali Unar');
+      await tester.enterText(find.byType(TextField), 'Ali Khan');
       await tester.pumpAndSettle();
 
       // Tap Save button
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
 
-      expect(mockAuth.updatedName, 'Mudasir Ali Unar');
+      expect(mockAuth.updatedName, 'Ali Khan');
       expect(find.text('Name updated successfully.'), findsOneWidget);
     });
 

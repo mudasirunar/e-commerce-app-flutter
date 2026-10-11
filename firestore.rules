@@ -40,6 +40,28 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    function validAddress(data, addressId) {
+      return data.keys().hasAll([
+          'id', 'label', 'fullName', 'phone', 'address', 'city', 'isDefault'
+        ])
+        && data.keys().hasOnly([
+          'id', 'label', 'fullName', 'phone', 'address', 'city', 'isDefault', 'updatedAt'
+        ])
+        && data.id == addressId
+        && data.label is string
+        && data.label.size() >= 1 && data.label.size() <= 50
+        && data.fullName is string
+        && data.fullName.size() >= 1 && data.fullName.size() <= 100
+        && data.phone is string
+        && data.phone.matches('[+][1-9][0-9]{7,14}')
+        && data.address is string
+        && data.address.size() >= 5 && data.address.size() <= 500
+        && data.city is string
+        && data.city.size() >= 2 && data.city.size() <= 50
+        && data.isDefault is bool
+        && (('updatedAt' in data) ? (data.updatedAt is timestamp) : true);
+    }
+
     function validCartItem(productId) {
       let data = request.resource.data;
       let product = get(/databases/$(database)/documents/products/$(productId)).data;
@@ -74,6 +96,11 @@ service cloud.firestore {
 
       // Account deletion and identity/role changes need trusted backend cleanup.
       allow delete: if false;
+
+      match /addresses/{addressId} {
+        allow read, delete: if owner(uid);
+        allow create, update: if owner(uid) && validAddress(request.resource.data, addressId);
+      }
 
       match /cart/{productId} {
         allow read: if owner(uid);

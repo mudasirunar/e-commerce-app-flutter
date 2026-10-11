@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ecommerceapp/models/user_address.dart';
 import 'package:ecommerceapp/models/user_profile.dart';
 import 'package:ecommerceapp/providers/address_provider.dart';
 import 'package:ecommerceapp/services/firestore/firestore_service.dart';
@@ -8,6 +9,7 @@ import 'package:ecommerceapp/services/local/local_storage_service.dart';
 class FakeFirestoreService extends FirestoreService {
   String? updatedDefaultAddress;
   String? updatedPhone;
+  final Map<String, List<UserAddress>> remoteAddresses = {};
 
   @override
   Future<void> updateDeliveryProfile({
@@ -17,6 +19,26 @@ class FakeFirestoreService extends FirestoreService {
   }) async {
     updatedDefaultAddress = defaultAddress;
     updatedPhone = phone;
+  }
+
+  @override
+  Future<List<UserAddress>> getUserAddresses(String uid) async {
+    return List.from(remoteAddresses[uid] ?? []);
+  }
+
+  @override
+  Future<void> saveUserAddress(String uid, UserAddress address) async {
+    final list = remoteAddresses.putIfAbsent(uid, () => []);
+    list.removeWhere((a) => a.id == address.id);
+    list.add(address);
+  }
+
+  @override
+  Future<void> deleteUserAddress(String uid, String addressId) async {
+    final list = remoteAddresses[uid];
+    if (list != null) {
+      list.removeWhere((a) => a.id == addressId);
+    }
   }
 }
 
@@ -63,7 +85,7 @@ void main() {
 
       final success = await provider.addAddress(
         label: 'Home',
-        fullName: 'Mudasir Unar',
+        fullName: 'John Doe',
         phone: '03001234567',
         address: 'House 12, Street 3',
         city: 'Karachi',
@@ -151,6 +173,55 @@ void main() {
       expect(provider.defaultAddress!.label, 'Office');
       expect(provider.defaultAddress!.isDefault, isTrue);
       expect(fakeFirestore.updatedDefaultAddress, 'Address 2');
+    });
+
+    test('enforces strict maximum limit of 5 addresses', () async {
+      provider.updateAuth('user_123', null);
+
+      for (int i = 1; i <= 5; i++) {
+        final ok = await provider.addAddress(
+          label: 'Addr $i',
+          fullName: 'Recipient $i',
+          phone: '0300123456$i',
+          address: 'Street $i, Block $i',
+        );
+        expect(ok, isTrue);
+      }
+
+      expect(provider.addressesCount, 5);
+      expect(provider.canAddAddress, isFalse);
+
+      // Attempt adding 6th address
+      final attemptSixth = await provider.addAddress(
+        label: 'Addr 6',
+        fullName: 'Recipient 6',
+        phone: '03001234566',
+        address: 'Street 6, Block 6',
+      );
+
+      expect(attemptSixth, isFalse);
+      expect(provider.addressesCount, 5);
+      expect(provider.errorMessage, contains('Maximum of 5 saved addresses reached'));
+    });
+
+    test('syncs writes with Firestore remote addresses subcollection', () async {
+      provider.updateAuth('user_123', null);
+
+      await provider.addAddress(
+        label: 'Home',
+        fullName: 'Mudasir',
+        phone: '03001111111',
+        address: 'Karachi Home',
+        isDefault: true,
+      );
+
+      expect(fakeFirestore.remoteAddresses['user_123']?.length, 1);
+      expect(fakeFirestore.remoteAddresses['user_123']!.first.address, 'Karachi Home');
+
+      final homeId = provider.addresses.first.id;
+      await provider.deleteAddress(homeId);
+
+      expect(fakeFirestore.remoteAddresses['user_123']?.length, 0);
     });
   });
 }

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/category.dart';
 import '../../models/product.dart';
+import '../../models/user_address.dart';
 import '../../models/user_profile.dart';
 import '../../models/cart_item.dart';
 import '../../models/order.dart';
@@ -92,6 +93,67 @@ class FirestoreService {
     await _db.collection('users').doc(uid).update({
       'name': name.trim(),
       'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // ==================== USER ADDRESSES ====================
+
+  /// Fetches saved delivery destinations from `users/{uid}/addresses`.
+  Future<List<UserAddress>> getUserAddresses(String uid) async {
+    final snapshot = await _db
+        .collection('users')
+        .doc(uid)
+        .collection('addresses')
+        .get();
+
+    return snapshot.docs.map((doc) {
+      final data = doc.data();
+      return UserAddress.fromMap({
+        ...data,
+        'id': (data['id'] as String?)?.isNotEmpty == true ? data['id'] : doc.id,
+      });
+    }).toList();
+  }
+
+  /// Writes or updates an address at `users/{uid}/addresses/{address.id}`.
+  Future<void> saveUserAddress(String uid, UserAddress address) async {
+    final data = address.toMap();
+    data['phone'] = address.e164Phone;
+    data['updatedAt'] = FieldValue.serverTimestamp();
+
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('addresses')
+        .doc(address.id)
+        .set(data);
+  }
+
+  /// Deletes a saved address at `users/{uid}/addresses/{addressId}`.
+  Future<void> deleteUserAddress(String uid, String addressId) async {
+    await _db
+        .collection('users')
+        .doc(uid)
+        .collection('addresses')
+        .doc(addressId)
+        .delete();
+  }
+
+  /// Realtime stream of user addresses.
+  Stream<List<UserAddress>> watchUserAddresses(String uid) {
+    return _db
+        .collection('users')
+        .doc(uid)
+        .collection('addresses')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return UserAddress.fromMap({
+          ...data,
+          'id': (data['id'] as String?)?.isNotEmpty == true ? data['id'] : doc.id,
+        });
+      }).toList();
     });
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/order.dart';
+import '../../providers/catalog_provider.dart';
 import '../../providers/order_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/app_confirmation_dialog.dart';
@@ -19,6 +20,81 @@ class OrderDetailScreen extends StatefulWidget {
 
 class _OrderDetailScreenState extends State<OrderDetailScreen> {
   bool _isCancelling = false;
+
+  String? _resolveItemImage(BuildContext context, OrderItemSnapshot item) {
+    if (item.imageUrlSnapshot != null && item.imageUrlSnapshot!.isNotEmpty) {
+      return item.imageUrlSnapshot;
+    }
+    try {
+      final catalog = context.read<CatalogProvider>();
+      final products = catalog.allProducts;
+      for (final p in products) {
+        if (p.productId == item.productId && p.imageUrl.isNotEmpty) {
+          return p.imageUrl;
+        }
+      }
+      for (final p in products) {
+        if (p.name.trim().toLowerCase() == item.nameSnapshot.trim().toLowerCase() &&
+            p.imageUrl.isNotEmpty) {
+          return p.imageUrl;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  Widget _buildProductThumbnail(String? imageUrl, {required bool isDark, double size = 56}) {
+    Widget content;
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        content = Image.network(
+          imageUrl,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildFallbackIcon(isDark),
+        );
+      } else if (imageUrl.startsWith('assets/')) {
+        content = Image.asset(
+          imageUrl,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildFallbackIcon(isDark),
+        );
+      } else {
+        content = Image.network(
+          imageUrl,
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => _buildFallbackIcon(isDark),
+        );
+      }
+    } else {
+      content = _buildFallbackIcon(isDark);
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: size,
+        height: size,
+        color: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
+        child: content,
+      ),
+    );
+  }
+
+  Widget _buildFallbackIcon(bool isDark) {
+    return Center(
+      child: Icon(
+        Icons.inventory_2_outlined,
+        size: 24,
+        color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+      ),
+    );
+  }
 
   Future<void> _handleCancelOrder(OrderModel liveOrder) async {
     final confirmed = await AppConfirmationDialog.show(
@@ -136,20 +212,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                   ),
                   child: Row(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                        child: Container(
-                          height: 52,
-                          width: 52,
-                          color: isDark ? AppTheme.darkBackground : AppTheme.lightBackground,
-                          child: item.imageUrlSnapshot != null && item.imageUrlSnapshot!.isNotEmpty
-                              ? Image.network(
-                                  item.imageUrlSnapshot!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.chair_outlined),
-                                )
-                              : const Icon(Icons.chair_outlined),
-                        ),
+                      _buildProductThumbnail(
+                        _resolveItemImage(context, item),
+                        isDark: isDark,
+                        size: 54,
                       ),
                       const SizedBox(width: AppTheme.space12),
                       Expanded(
@@ -160,7 +226,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                               item.nameSnapshot,
                               style: const TextStyle(
                                 fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -176,9 +242,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                       ),
                       Text(
                         item.formattedSubtotal,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
                         ),
                       ),
                     ],

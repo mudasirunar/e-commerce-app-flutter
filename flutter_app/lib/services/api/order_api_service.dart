@@ -34,7 +34,34 @@ class OrderApiService {
       return OrderModel.fromMap(orderData, orderId);
     }
 
-    throw const FormatException('Server did not return a valid order object.');
+    if (orderId.isNotEmpty) {
+      final orderItems = items.map((item) {
+        return OrderItemSnapshot(
+          productId: item['productId']?.toString() ?? '',
+          nameSnapshot: 'Order Item',
+          unitPriceMinorSnapshot: 0,
+          quantity: (item['quantity'] as num?)?.toInt() ?? 1,
+        );
+      }).toList();
+
+      return OrderModel(
+        orderId: orderId,
+        userId: '',
+        attemptId: attemptId,
+        items: orderItems,
+        subtotalMinor: (response['subtotalMinor'] as num?)?.toInt() ?? 0,
+        deliveryFeeMinor: (response['deliveryFeeMinor'] as num?)?.toInt() ?? 0,
+        totalMinor: (response['totalMinor'] as num?)?.toInt() ?? 0,
+        deliveryName: deliveryInfo.fullName,
+        deliveryPhone: deliveryInfo.phone,
+        deliveryAddress: deliveryInfo.address,
+        status: OrderStatus.pending,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+    }
+
+    throw const FormatException('Server did not return a valid order object or ID.');
   }
 
   /// Requests customer cancellation for a Pending order.

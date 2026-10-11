@@ -119,7 +119,8 @@ export default async function handler(req, res) {
           nameSnapshot: product.name,
           unitPriceMinorSnapshot: priceMinor,
           quantity: item.quantity,
-          imageUrl: product.imageUrl || ''
+          imageUrl: product.imageUrl || '',
+          imageUrlSnapshot: product.imageUrl || ''
         });
 
         stockUpdates.push({
