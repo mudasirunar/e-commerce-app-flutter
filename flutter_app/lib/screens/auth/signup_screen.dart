@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../services/api/auth_api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
 import 'login_screen.dart';
-import 'verify_otp_screen.dart';
 
 /// Screen allowing new customers to register for an account.
 class SignupScreen extends StatefulWidget {
@@ -65,24 +63,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     if (success && mounted) {
       auth.clearError();
-      // Send email verification OTP in the background via Brevo
-      try {
-        final authApi = context.read<AuthApiService>();
-        await authApi.sendOtp(email: email, purpose: 'email_verification');
-        if (mounted) {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => VerifyOtpScreen(email: email, purpose: 'email_verification'),
-            ),
-          );
-        }
-      } catch (_) {
-        // If OTP delivery encounters an error, account is still created and user is signed in
-      }
-
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
+      Navigator.of(context).pop();
     } else if (mounted) {
       final msg = auth.errorMessage ?? 'Failed to create account.';
       setState(() {

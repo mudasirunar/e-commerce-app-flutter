@@ -29,24 +29,22 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid email format.' });
     }
 
-    const validPurposes = ['password_reset', 'email_verification'];
-    if (!validPurposes.includes(purpose)) {
-      return res.status(400).json({ error: 'Invalid purpose. Must be password_reset or email_verification.' });
+    if (purpose !== 'password_reset') {
+      return res.status(400).json({ error: 'Invalid purpose. OTP is only supported for password_reset.' });
     }
 
     const admin = getFirebaseAdmin();
     const db = admin.firestore();
 
-    // For password reset, confirm the user exists in Firebase Auth
-    if (purpose === 'password_reset') {
-      try {
-        await admin.auth().getUserByEmail(normalizedEmail);
-      } catch (authErr) {
-        if (authErr.code === 'auth/user-not-found') {
-          return res.status(404).json({ error: 'No user account found with this email.' });
-        }
-        console.error('Firebase Auth lookup error:', authErr);
+    // Confirm the user exists in Firebase Auth before sending password reset OTP
+    try {
+      await admin.auth().getUserByEmail(normalizedEmail);
+    } catch (authErr) {
+      if (authErr.code === 'auth/user-not-found') {
+        return res.status(404).json({ error: 'No user account found with this email.' });
       }
+      console.error('Firebase Auth lookup error:', authErr);
+      return res.status(404).json({ error: 'No user account found with this email.' });
     }
 
     const challengeKey = `${normalizedEmail}_${purpose}`;

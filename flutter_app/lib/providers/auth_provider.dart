@@ -98,15 +98,20 @@ class AuthProvider extends ChangeNotifier {
 
       final user = credential.user;
       if (user != null) {
-        final profile = UserProfile(
-          uid: user.uid,
-          name: name.trim(),
-          email: email.trim(),
-          createdAt: DateTime.now(),
-        );
-        await _firestoreService.saveUserProfile(profile);
+        try {
+          final profile = UserProfile(
+            uid: user.uid,
+            name: name.trim(),
+            email: email.trim(),
+            createdAt: DateTime.now(),
+          );
+          await _firestoreService.saveUserProfile(profile);
+        } catch (e) {
+          debugPrint('Firestore profile creation error during signup: $e');
+        }
       }
 
+      _errorMessage = null;
       _setLoading(false);
       return true;
     } on FirebaseAuthException catch (e) {
@@ -163,6 +168,7 @@ class AuthProvider extends ChangeNotifier {
   /// Signs out of the application.
   Future<void> signOut() async {
     _setLoading(true);
+    _errorMessage = null;
     await _authService.signOut();
     _user = null;
     _profile = null;

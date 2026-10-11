@@ -205,6 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       CustomButton(
                         text: 'Sign In / Register',
                         onPressed: () {
+                          context.read<AuthProvider>().clearError();
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => const LoginScreen(),
@@ -717,7 +718,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (confirmed == true) {
-      auth.signOut();
+      auth.clearError();
+      await auth.signOut();
     }
   }
 }
