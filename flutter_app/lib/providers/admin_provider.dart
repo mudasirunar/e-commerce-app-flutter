@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/order.dart';
+import '../models/product.dart';
 import '../services/api/admin_api_service.dart';
 import '../services/api/api_exception.dart';
 import '../services/firestore/firestore_service.dart';
@@ -12,14 +13,17 @@ class AdminProvider extends ChangeNotifier {
   bool _isAdmin = false;
 
   List<OrderModel> _allOrders = [];
+  List<Product> _allProducts = [];
   bool _isLoading = false;
   String? _errorMessage;
 
   StreamSubscription<List<OrderModel>>? _ordersSub;
+  StreamSubscription<List<Product>>? _productsSub;
 
   AdminProvider(this._firestoreService, [this._adminApiService]);
 
   List<OrderModel> get allOrders => _allOrders;
+  List<Product> get allProducts => _allProducts;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
@@ -27,10 +31,13 @@ class AdminProvider extends ChangeNotifier {
     if (_isAdmin == isAdmin) return;
     _isAdmin = isAdmin;
     _ordersSub?.cancel();
+    _productsSub?.cancel();
     _allOrders = [];
+    _allProducts = [];
 
     if (isAdmin) {
       _subscribeToAllOrders();
+      _subscribeToAllProducts();
     } else {
       notifyListeners();
     }
@@ -52,6 +59,25 @@ class AdminProvider extends ChangeNotifier {
         notifyListeners();
       },
     );
+  }
+
+  void _subscribeToAllProducts() {
+    _productsSub = _firestoreService.watchAllProductsAdmin().listen(
+      (productList) {
+        _allProducts = productList;
+        notifyListeners();
+      },
+      onError: (err) {
+        // Fallback silently if rules or network fail
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _ordersSub?.cancel();
+    _productsSub?.cancel();
+    super.dispose();
   }
 
   OrderModel? getOrderById(String orderId) {
@@ -127,11 +153,5 @@ class AdminProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
     }
-  }
-
-  @override
-  void dispose() {
-    _ordersSub?.cancel();
-    super.dispose();
   }
 }

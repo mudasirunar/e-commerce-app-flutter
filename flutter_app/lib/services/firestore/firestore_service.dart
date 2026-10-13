@@ -224,6 +224,21 @@ class FirestoreService {
     });
   }
 
+  /// Realtime stream of all products for Admin management (including inactive/hidden products).
+  Stream<List<Product>> watchAllProductsAdmin({String? categoryId}) {
+    Query<Map<String, dynamic>> query = _db.collection('products');
+    if (categoryId != null && categoryId.isNotEmpty) {
+      query = query.where('categoryId', isEqualTo: categoryId);
+    }
+    return query.snapshots().map((snapshot) {
+      final products = snapshot.docs
+          .map((doc) => Product.fromMap(doc.data(), doc.id))
+          .toList();
+      products.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      return products;
+    });
+  }
+
   /// Fetches a single product by ID.
   Future<Product?> getProductById(String productId) async {
     final doc = await _db.collection('products').doc(productId).get();
