@@ -105,13 +105,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: AppTheme.space20),
 
-              // 2. Active Orders Section (Only renders when active orders exist)
+              // 2. Admin Portal Card (Role-Gated - positioned prominently after name card)
+              if (auth.isAdmin) ...[
+                _buildAdminTile(context, isDark),
+                const SizedBox(height: AppTheme.space20),
+              ],
+
+              // 3. Active Orders Section (Only renders when active orders exist)
               if (auth.isAuthenticated && activeOrders.isNotEmpty) ...[
                 _buildActiveOrdersSection(context, activeOrders, isDark),
                 const SizedBox(height: AppTheme.space24),
               ],
 
-              // 3. Section Header
+              // 4. Section Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Row(
@@ -139,7 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: AppTheme.space12),
 
-              // 4. Overview Grid
+              // 5. Overview Grid
               _buildOverviewGrid(
                 context,
                 isDark: isDark,
@@ -155,12 +161,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
               const SizedBox(height: AppTheme.space20),
-
-              // 5. Admin Portal Card (Role-Gated)
-              if (auth.isAdmin) ...[
-                _buildAdminTile(context, isDark),
-                const SizedBox(height: AppTheme.space20),
-              ],
 
               // 6. Sign Out Button
               if (auth.isAuthenticated) ...[
@@ -1233,70 +1233,237 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ==================== STORE ADMIN PORTAL TILE ====================
 
   Widget _buildAdminTile(BuildContext context, bool isDark) {
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
-        );
-      },
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        padding: const EdgeInsets.all(AppTheme.space16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: isDark
-                ? [const Color(0xFF27272A), const Color(0xFF1E1E24)]
-                : [const Color(0xFFFFFFFF), const Color(0xFFFBF8F5)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isDark ? const Color(0xFFFB923C).withValues(alpha: 0.4) : const Color(0xFFEA580C).withValues(alpha: 0.3),
-            width: 1.4,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkAccentContainer : AppTheme.lightAccentContainer,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.admin_panel_settings_rounded,
-                color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
-                size: 22,
-              ),
+    final accentColor = isDark ? AppTheme.darkAccent : AppTheme.lightAccent;
+    final primaryTextColor = isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary;
+    final secondaryTextColor = isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary;
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(AppTheme.space16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: isDark
+                  ? [const Color(0xFF241D1B), const Color(0xFF1C1917)]
+                  : [const Color(0xFFFFFBF7), const Color(0xFFFFF4ED)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            const SizedBox(width: AppTheme.space12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            border: Border.all(
+              color: isDark
+                  ? const Color(0xFFEA580C).withValues(alpha: 0.35)
+                  : const Color(0xFFEA580C).withValues(alpha: 0.25),
+              width: 1.4,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFC2410C).withValues(alpha: isDark ? 0.2 : 0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Squircle Gradient Icon, Titles, and Arrow Button
+              Row(
                 children: [
-                  Text(
-                    'Admin Operations Portal',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 14,
-                      color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+                  // Luxury Terracotta Gradient Squircle Icon
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? [const Color(0xFFFB923C), const Color(0xFFC2410C)]
+                            : [const Color(0xFFEA580C), const Color(0xFF9A3412)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accentColor.withValues(alpha: 0.35),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.admin_panel_settings_rounded,
+                        color: Colors.white,
+                        size: 26,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Manage inventory, categories, and store orders.',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                  const SizedBox(width: AppTheme.space12),
+
+                  // Title, Live Control Badge, and Subtitle
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Admin Portal',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.2,
+                                color: primaryTextColor,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Live Portal Pill Badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.2 : 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.4),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 5,
+                                    height: 5,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF10B981),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    'CONTROL',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.6,
+                                      color: Color(0xFF10B981),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Store Operations & Management',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: secondaryTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Forward Navigation Chevron Pill
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: isDark ? 0.18 : 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        color: accentColor,
+                        size: 16,
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
+
+              const SizedBox(height: AppTheme.space12),
+
+              // Capabilities Micro-Capsules Bar
+              Row(
+                children: [
+                  _buildAdminCapabilityPill(
+                    icon: Icons.inventory_2_outlined,
+                    label: 'Inventory',
+                    isDark: isDark,
+                    accentColor: accentColor,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildAdminCapabilityPill(
+                    icon: Icons.local_shipping_outlined,
+                    label: 'Orders',
+                    isDark: isDark,
+                    accentColor: accentColor,
+                  ),
+                  const SizedBox(width: 8),
+                  _buildAdminCapabilityPill(
+                    icon: Icons.analytics_outlined,
+                    label: 'Pipeline',
+                    isDark: isDark,
+                    accentColor: accentColor,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAdminCapabilityPill({
+    required IconData icon,
+    required String label,
+    required bool isDark,
+    required Color accentColor,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF2A2220) : const Color(0xFFFCEFE7),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: accentColor.withValues(alpha: isDark ? 0.2 : 0.15),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
             Icon(
-              Icons.chevron_right_rounded,
-              color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
+              icon,
+              size: 13,
+              color: accentColor,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppTheme.darkTextPrimary : AppTheme.lightTextPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

@@ -383,5 +383,31 @@ void main() {
       await tester.pumpAndSettle();
       expect(mockTheme.themeMode, ThemeMode.system);
     });
+
+    testWidgets('renders executive Admin Portal card above Account Overview when user is admin', (tester) async {
+      mockAuth.isAdmin = true;
+
+      await tester.pumpWidget(buildProfileScreenWidget(
+        auth: mockAuth,
+        cart: mockCart,
+        orderProvider: mockOrder,
+        addressProvider: mockAddress,
+        themeProvider: mockTheme,
+      ));
+      await tester.pumpAndSettle();
+
+      // Admin portal card elements
+      expect(find.text('Admin Portal'), findsOneWidget);
+      expect(find.text('CONTROL'), findsOneWidget);
+      expect(find.text('Store Operations & Management'), findsOneWidget);
+      expect(find.text('Inventory'), findsOneWidget);
+      expect(find.text('Orders'), findsNWidgets(2)); // Capability pill + Bento orders tile
+      expect(find.text('Pipeline'), findsOneWidget);
+
+      // Verify it appears above Account Overview in the vertical layout
+      final adminPortalTop = tester.getTopLeft(find.text('Admin Portal')).dy;
+      final accountOverviewTop = tester.getTopLeft(find.text('Account Overview')).dy;
+      expect(adminPortalTop, lessThan(accountOverviewTop));
+    });
   });
 }
