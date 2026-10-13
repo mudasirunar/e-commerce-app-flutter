@@ -18,11 +18,17 @@ export default async function handler(req, res) {
     const { orderId, newStatus, note } = body;
 
     const validStatuses = ['Pending', 'Confirmed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
-    if (!orderId || !newStatus || !validStatuses.includes(newStatus)) {
+    const matchedStatus = validStatuses.find(
+      s => s.toLowerCase() === String(newStatus || '').trim().toLowerCase()
+    );
+
+    if (!orderId || !matchedStatus) {
       return res.status(400).json({
         error: `orderId and valid newStatus (${validStatuses.join(', ')}) are required.`
       });
     }
+
+    const normalizedNewStatus = matchedStatus;
 
     const admin = getFirebaseAdmin();
     const db = admin.firestore();
@@ -35,9 +41,12 @@ export default async function handler(req, res) {
       }
 
       const order = snap.data();
-      const currentStatus = order.status;
+      const rawCurrentStatus = order.status || 'Pending';
+      const normalizedCurrentStatus = validStatuses.find(
+        s => s.toLowerCase() === String(rawCurrentStatus).trim().toLowerCase()
+      ) || rawCurrentStatus;
 
-      if (currentStatus === newStatus) {
+      if (normalizedCurrentStatus === normalizedNewStatus) {
         return; // Idempotent no-op
       }
 
@@ -51,29 +60,23 @@ export default async function handler(req, res) {
         Cancelled: []
       };
 
-      const allowed = ALLOWED_TRANSITIONS[currentStatus] || [];
-      if (!allowed.includes(newStatus)) {
+      const allowed = ALLOWED_TRANSITIONS[normalizedCurrentStatus] || [];
+      if (!allowed.includes(normalizedNewStatus)) {
         const errorMsg = allowed.length > 0
-          ? `Invalid status transition from "${currentStatus}" to "${newStatus}". Allowed transitions: ${allowed.join(', ')}.`
-          : `Status "${currentStatus}" is terminal and cannot be transitioned to any other status.`;
+          ? `Invalid status transition from "${normalizedCurrentStatus}" to "${normalizedNewStatus}". Allowed transitions: ${allowed.join(', ')}.`
+          : `Status "${normalizedCurrentStatus}" is terminal and cannot be transitioned to any other status.`;
         const transErr = new Error(errorMsg);
         transErr.statusCode = 400;
         throw transErr;
       }
 
-      // If transitioning to Cancelled, restore stock
-      if (newStatus === 'Cancelled') {
-        const productSnaps = await Promise.all(
-          order.items.map(item => transaction.get(db.collection('products').doc(item.productId)))
-        );
-
-        for (let i = 0; i < order.items.length; i++) {
-          const item = order.items[i];
-          const pSnap = productSnaps[i];
-          if (pSnap.exists) {
-            const currentStock = pSnap.data().stockQuantity || 0;
-            transaction.update(pSnap.ref, {
-              stockQuantity: currentStock + item.quantity,
+      // If transitioning to Cancelled, restore stock atomically
+      if (normalizedNewStatus === 'Cancelled') {
+        for (const item of (order.items || [])) {
+          if (item.productId && item.quantity) {
+            const pRef = db.collection('products').doc(item.productId);
+            transaction.update(pRef, {
+              stockQuantity: admin.firestore.FieldValue.increment(item.quantity),
               updatedAt: admin.firestore.FieldValue.serverTimestamp()
             });
           }
@@ -82,15 +85,15 @@ export default async function handler(req, res) {
 
       const statusHistory = Array.isArray(order.statusHistory) ? order.statusHistory : [];
       statusHistory.push({
-        status: newStatus,
-        previousStatus: currentStatus,
+        status: normalizedNewStatus,
+        previousStatus: normalizedCurrentStatus,
         timestamp: new Date().toISOString(),
         note: note || `Updated by admin (${user.email || user.uid})`,
         by: user.uid
       });
 
       transaction.update(orderRef, {
-        status: newStatus,
+        status: normalizedNewStatus,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         statusHistory
       });
@@ -98,7 +101,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: `Order status updated to ${newStatus}.`
+      message: `Order status updated to ${normalizedNewStatus}.`
     });
 
   } catch (error) {

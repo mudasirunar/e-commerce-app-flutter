@@ -10,14 +10,21 @@ import '../../widgets/orders/order_status_badge.dart';
 /// Screen allowing administrators to review and advance order fulfillment states
 /// across the backend-enforced order lifecycle state machine.
 class AdminOrdersScreen extends StatefulWidget {
-  const AdminOrdersScreen({super.key});
+  final String initialFilter;
+  const AdminOrdersScreen({super.key, this.initialFilter = 'All'});
 
   @override
   State<AdminOrdersScreen> createState() => _AdminOrdersScreenState();
 }
 
 class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
-  String _selectedFilter = 'All';
+  late String _selectedFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedFilter = widget.initialFilter;
+  }
 
   final List<String> _filters = const [
     'All',
@@ -59,7 +66,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
       final admin = context.read<AdminProvider>();
       final success = await admin.updateOrderStatus(
         order.orderId,
-        newStatus.toLowerCase(),
+        newStatus,
         note: 'Status advanced by administrator in admin portal',
       );
 
