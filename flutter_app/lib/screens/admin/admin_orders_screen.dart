@@ -31,7 +31,7 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
   List<String> _getAllowedNextStatuses(OrderStatus currentStatus) {
     switch (currentStatus) {
       case OrderStatus.pending:
-        return ['Processing', 'Cancelled'];
+        return ['Confirmed', 'Processing', 'Cancelled'];
       case OrderStatus.confirmed:
         return ['Processing', 'Cancelled'];
       case OrderStatus.processing:
@@ -182,10 +182,14 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      '${order.totalQuantity} items • Cash on Delivery',
-                                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                    Expanded(
+                                      child: Text(
+                                        '${order.totalQuantity} items • Cash on Delivery',
+                                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
+                                    const SizedBox(width: 8),
                                     Text(
                                       order.formattedTotal,
                                       style: TextStyle(
@@ -201,30 +205,56 @@ class _AdminOrdersScreenState extends State<AdminOrdersScreen> {
                                   const SizedBox(height: AppTheme.space12),
                                   Divider(color: isDark ? AppTheme.darkBorder : AppTheme.lightBorder),
                                   const SizedBox(height: AppTheme.space8),
-                                  Row(
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        'Move status to: ',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                          color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
-                                        ),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.swap_horiz_rounded,
+                                            size: 15,
+                                            color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Move status to:',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              color: isDark ? AppTheme.darkTextSecondary : AppTheme.lightTextSecondary,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const Spacer(),
-                                      ...nextStatuses.map((target) {
-                                        return Padding(
-                                          padding: const EdgeInsets.only(left: 8),
-                                          child: OutlinedButton(
+                                      const SizedBox(height: 8),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: nextStatuses.map((target) {
+                                          final isCancel = target.toLowerCase() == 'cancelled';
+                                          final accentColor = isDark ? AppTheme.darkAccent : AppTheme.lightAccent;
+                                          final color = isCancel ? const Color(0xFFEF4444) : accentColor;
+                                          return OutlinedButton(
                                             style: OutlinedButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                              foregroundColor: color,
+                                              side: BorderSide(
+                                                color: color.withValues(alpha: 0.4),
+                                                width: 1,
+                                              ),
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                               minimumSize: const Size(60, 32),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
                                             ),
                                             onPressed: () => _handleStatusChange(order, target),
-                                            child: Text(target, style: const TextStyle(fontSize: 12)),
-                                          ),
-                                        );
-                                      }),
+                                            child: Text(
+                                              target,
+                                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
                                     ],
                                   ),
                                 ],

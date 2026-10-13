@@ -43,7 +43,7 @@ export default async function handler(req, res) {
 
       // Explicit status transition state machine from ARCHITECTURE.md
       const ALLOWED_TRANSITIONS = {
-        Pending: ['Confirmed', 'Cancelled'],
+        Pending: ['Confirmed', 'Processing', 'Cancelled'],
         Confirmed: ['Processing', 'Cancelled'],
         Processing: ['Shipped', 'Cancelled'],
         Shipped: ['Delivered'],
