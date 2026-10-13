@@ -731,18 +731,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  static Color _getOrderStatusColor(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.confirmed:
-        return const Color(0xFFC2410C); // Terracotta
-      case OrderStatus.processing:
-        return const Color(0xFFD97706); // Amber
-      case OrderStatus.shipped:
-        return const Color(0xFF15803D); // Forest Green
-      case OrderStatus.pending:
-      default:
-        return const Color(0xFFEA580C); // Warm Orange
-    }
+  static Color _getOrderStatusColor(OrderStatus status, {bool isDark = false}) {
+    return AppTheme.orderStatusColor(status, isDark: isDark);
   }
 
   // ==================== OVERVIEW GRID ====================
@@ -1736,23 +1726,27 @@ class _ActiveOrderCardState extends State<_ActiveOrderCard> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: statusColor.withValues(alpha: 0.4)),
-                ),
-                child: Text(
-                  order.status.value.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: statusColor,
-                    letterSpacing: 0.6,
-                  ),
-                ),
+              Builder(
+                builder: (context) {
+                  final chipColors = AppTheme.orderStatusChipColors(order.status, isDark: isDark);
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: chipColors.bg,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: chipColors.border),
+                    ),
+                    child: Text(
+                      order.status.value.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: chipColors.fg,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),

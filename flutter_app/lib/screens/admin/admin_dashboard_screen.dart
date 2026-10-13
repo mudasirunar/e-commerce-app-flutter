@@ -737,15 +737,15 @@ class AdminDashboardScreen extends StatelessWidget {
                   : Row(
                       children: [
                         if (pendingCount > 0)
-                          Expanded(flex: pendingCount, child: Container(color: const Color(0xFFF59E0B))),
+                          Expanded(flex: pendingCount, child: Container(color: AppTheme.statusPending)),
                         if (processingCount > 0)
-                          Expanded(flex: processingCount, child: Container(color: const Color(0xFF6366F1))),
+                          Expanded(flex: processingCount, child: Container(color: AppTheme.statusProcessing)),
                         if (shippedCount > 0)
-                          Expanded(flex: shippedCount, child: Container(color: const Color(0xFFEA580C))),
+                          Expanded(flex: shippedCount, child: Container(color: AppTheme.statusShipped)),
                         if (deliveredCount > 0)
-                          Expanded(flex: deliveredCount, child: Container(color: const Color(0xFF10B981))),
+                          Expanded(flex: deliveredCount, child: Container(color: AppTheme.statusDelivered)),
                         if (cancelledCount > 0)
-                          Expanded(flex: cancelledCount, child: Container(color: const Color(0xFF991B1B))),
+                          Expanded(flex: cancelledCount, child: Container(color: AppTheme.statusCancelled)),
                       ],
                     ),
             ),
@@ -758,11 +758,11 @@ class AdminDashboardScreen extends StatelessWidget {
             spacing: 6,
             runSpacing: 6,
             children: [
-              _buildPipelineStatusChip(context, label: 'Pending', count: pendingCount, color: const Color(0xFFF59E0B), isDark: isDark),
-              _buildPipelineStatusChip(context, label: 'Processing', count: processingCount, color: const Color(0xFF6366F1), isDark: isDark),
-              _buildPipelineStatusChip(context, label: 'Shipped', count: shippedCount, color: const Color(0xFFEA580C), isDark: isDark),
-              _buildPipelineStatusChip(context, label: 'Delivered', count: deliveredCount, color: const Color(0xFF10B981), isDark: isDark),
-              _buildPipelineStatusChip(context, label: 'Cancelled', count: cancelledCount, color: const Color(0xFF991B1B), isDark: isDark),
+              _buildPipelineStatusChip(context, label: 'Pending', count: pendingCount, color: AppTheme.statusPending, isDark: isDark),
+              _buildPipelineStatusChip(context, label: 'Processing', count: processingCount, color: AppTheme.statusProcessing, isDark: isDark),
+              _buildPipelineStatusChip(context, label: 'Shipped', count: shippedCount, color: AppTheme.statusShipped, isDark: isDark),
+              _buildPipelineStatusChip(context, label: 'Delivered', count: deliveredCount, color: AppTheme.statusDelivered, isDark: isDark),
+              _buildPipelineStatusChip(context, label: 'Cancelled', count: cancelledCount, color: AppTheme.statusCancelled, isDark: isDark),
             ],
           ),
         ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/order.dart';
 
 /// Design tokens and ThemeData definitions for Palette 2: Warm Earth & Terracotta.
 class AppTheme {
@@ -36,6 +37,80 @@ class AppTheme {
   static const Color warningContainer = Color(0xFFFEF3C7);
   static const Color error = Color(0xFFB91C1C);
   static const Color errorContainer = Color(0xFFFEE2E2);
+
+  // --- Unified 6 Order Status Colors ---
+  static const Color statusPending = Color(0xFFD97706); // Warm Amber
+  static const Color statusPendingDark = Color(0xFFFBBF24);
+  static const Color statusConfirmed = Color(0xFF0284C7); // Trust Sky Blue
+  static const Color statusConfirmedDark = Color(0xFF38BDF8);
+  static const Color statusProcessing = Color(0xFF7C3AED); // Royal Purple
+  static const Color statusProcessingDark = Color(0xFFC084FC);
+  static const Color statusShipped = Color(0xFF4F46E5); // Transit Indigo
+  static const Color statusShippedDark = Color(0xFF818CF8);
+  static const Color statusDelivered = Color(0xFF16A34A); // Success Green
+  static const Color statusDeliveredDark = Color(0xFF34D399);
+  static const Color statusCancelled = Color(0xFFDC2626); // Alert Red
+  static const Color statusCancelledDark = Color(0xFFF87171);
+
+  /// Canonical accent color for an order lifecycle state.
+  static Color orderStatusColor(OrderStatus status, {bool isDark = false}) {
+    switch (status) {
+      case OrderStatus.pending:
+        return isDark ? statusPendingDark : statusPending;
+      case OrderStatus.confirmed:
+        return isDark ? statusConfirmedDark : statusConfirmed;
+      case OrderStatus.processing:
+        return isDark ? statusProcessingDark : statusProcessing;
+      case OrderStatus.shipped:
+        return isDark ? statusShippedDark : statusShipped;
+      case OrderStatus.delivered:
+        return isDark ? statusDeliveredDark : statusDelivered;
+      case OrderStatus.cancelled:
+        return isDark ? statusCancelledDark : statusCancelled;
+    }
+  }
+
+  /// Color tokens (bg, fg, border) for order status chips and pill badges.
+  static ({Color bg, Color fg, Color border}) orderStatusChipColors(OrderStatus status, {bool isDark = false}) {
+    switch (status) {
+      case OrderStatus.pending:
+        return (
+          bg: isDark ? const Color(0xFF38230B) : const Color(0xFFFEF3C7),
+          fg: isDark ? statusPendingDark : const Color(0xFF92400E),
+          border: isDark ? const Color(0xFF78350F) : const Color(0xFFFDE68A),
+        );
+      case OrderStatus.confirmed:
+        return (
+          bg: isDark ? const Color(0xFF0C2D48) : const Color(0xFFE0F2FE),
+          fg: isDark ? statusConfirmedDark : const Color(0xFF0369A1),
+          border: isDark ? const Color(0xFF0369A1) : const Color(0xFFBAE6FD),
+        );
+      case OrderStatus.processing:
+        return (
+          bg: isDark ? const Color(0xFF2E1045) : const Color(0xFFF3E8FF),
+          fg: isDark ? statusProcessingDark : const Color(0xFF6B21A8),
+          border: isDark ? const Color(0xFF581C87) : const Color(0xFFE9D5FF),
+        );
+      case OrderStatus.shipped:
+        return (
+          bg: isDark ? const Color(0xFF1E1B4B) : const Color(0xFFEEF2FF),
+          fg: isDark ? statusShippedDark : const Color(0xFF3730A3),
+          border: isDark ? const Color(0xFF312E81) : const Color(0xFFC7D2FE),
+        );
+      case OrderStatus.delivered:
+        return (
+          bg: isDark ? const Color(0xFF063319) : const Color(0xFFDCFCE7),
+          fg: isDark ? statusDeliveredDark : const Color(0xFF166534),
+          border: isDark ? const Color(0xFF065F46) : const Color(0xFFBBF7D0),
+        );
+      case OrderStatus.cancelled:
+        return (
+          bg: isDark ? const Color(0xFF2C1316) : const Color(0xFFFEF2F2),
+          fg: isDark ? statusCancelledDark : const Color(0xFFDC2626),
+          border: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFECACA),
+        );
+    }
+  }
 
   // Background aliases
   static const Color lightBackground = lightScaffold;

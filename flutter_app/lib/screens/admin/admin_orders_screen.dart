@@ -674,7 +674,7 @@ class _AdminOrderCard extends StatelessWidget {
                     runSpacing: 8,
                     children: nextStatuses.map((target) {
                       final isCancel = target.toLowerCase() == 'cancelled';
-                      final color = isCancel ? const Color(0xFFEF4444) : accentColor;
+                      final color = isCancel ? AppTheme.statusCancelled : accentColor;
 
                       return OutlinedButton(
                         style: OutlinedButton.styleFrom(
