@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -13,13 +15,14 @@ import '../../widgets/common/app_confirmation_dialog.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../widgets/common/custom_text_field.dart';
 import '../../widgets/navigation/app_navigation_shell.dart';
+import '../../widgets/common/welcome_banner.dart';
 import '../admin/admin_dashboard_screen.dart';
 import '../auth/login_screen.dart';
 import '../orders/order_detail_screen.dart';
 import 'addresses_screen.dart';
 import '../../utils/date_formatter.dart';
 
-/// Boutique Luxury redesigned Profile Screen adhering to Warm Earth & Terracotta aesthetics.
+/// Redesigned Profile Screen adhering to Warm Earth & Terracotta aesthetics.
 /// Features:
 /// - Hero Account Header with editable Display Name (Firestore synchronized)
 /// - Hidden Live Deliveries Hub (only surfaces when active orders exist)
@@ -36,9 +39,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _scrollController = ScrollController();
   final PageController _activeOrdersPageController = PageController(viewportFraction: 0.92);
   int _activeOrdersCurrentPage = 0;
+  Timer? _snackBarTimer;
+  ScaffoldMessengerState? _messenger;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _messenger = ScaffoldMessenger.of(context);
+  }
 
   @override
   void dispose() {
+    _snackBarTimer?.cancel();
+    _messenger?.clearSnackBars();
     _scrollController.dispose();
     _activeOrdersPageController.dispose();
     super.dispose();
@@ -536,7 +549,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         } else {
                                           final err = auth.errorMessage ?? 'Failed to update name.';
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text(err), backgroundColor: Colors.redAccent),
+                                            SnackBar(
+                                              content: Text(err),
+                                              backgroundColor: Colors.redAccent,
+                                              duration: const Duration(seconds: 2),
+                                              behavior: SnackBarBehavior.floating,
+                                            ),
                                           );
                                         }
                                       },
@@ -751,7 +769,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // Bento Item 1: Full-Width Prominent Shopping Bag Tile
         InkWell(
           onTap: () {
-            AppNavigationShell.globalTabNotifier.value = 2; // Cart tab
+            if (isAuthenticated) {
+              AppNavigationShell.globalTabNotifier.value = 2; // Cart tab
+            } else {
+              _promptSignIn(context);
+            }
           },
           borderRadius: BorderRadius.circular(18),
           child: Container(
@@ -1307,12 +1329,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _promptSignIn(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
       SnackBar(
         content: const Text('Please sign in to access this feature.'),
+        duration: const Duration(milliseconds: 2500),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
         action: SnackBarAction(
           label: 'Sign In',
+          textColor: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
           onPressed: () {
+            messenger.clearSnackBars();
             Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const LoginScreen()),
             );
@@ -1320,6 +1353,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+
+    _snackBarTimer?.cancel();
+    _snackBarTimer = Timer(const Duration(milliseconds: 2500), () {
+      messenger.clearSnackBars();
+    });
   }
 
   Future<void> _handleSignOut(BuildContext context, AuthProvider auth) async {
@@ -1334,8 +1372,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (confirmed == true) {
+      final userName = auth.userProfile?.displayName ?? '';
       auth.clearError();
       await auth.signOut();
+
+      if (!context.mounted) return;
+      Navigator.of(context).popUntil((route) => route.isFirst);
+      AppNavigationShell.navigateToHomeFresh(
+        banner: WelcomeBannerData.signOut(name: userName),
+      );
     }
   }
 }

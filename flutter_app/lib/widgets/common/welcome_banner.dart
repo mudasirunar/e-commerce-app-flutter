@@ -2,17 +2,34 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
 
-/// Data payload for configuring dynamic welcome banner messages.
+/// Data payload for configuring dynamic welcome banner and sign-out messages.
 class WelcomeBannerData {
   final bool isNewSignup;
   final String name;
   final bool isAdmin;
+  final bool isSignOut;
+  final IconData? icon;
+  final String? customTitle;
+  final String? customSubtitle;
 
   const WelcomeBannerData({
-    required this.isNewSignup,
-    required this.name,
+    this.isNewSignup = false,
+    this.name = '',
     this.isAdmin = false,
+    this.isSignOut = false,
+    this.icon,
+    this.customTitle,
+    this.customSubtitle,
   });
+
+  const WelcomeBannerData.signOut({
+    this.name = '',
+    this.icon = Icons.logout_rounded,
+    this.customTitle,
+    this.customSubtitle,
+  })  : isNewSignup = false,
+        isAdmin = false,
+        isSignOut = true;
 
   String get firstName {
     final clean = name.trim();
@@ -21,8 +38,12 @@ class WelcomeBannerData {
   }
 
   String get title {
+    if (customTitle != null) return customTitle!;
     final cleanName = firstName;
     final hasName = cleanName.isNotEmpty && cleanName.toLowerCase() != 'customer';
+    if (isSignOut) {
+      return hasName ? 'Signed out, $cleanName' : 'Signed out';
+    }
     if (isAdmin) {
       if (isNewSignup) {
         return hasName ? 'Welcome, Admin $cleanName!' : 'Welcome, Admin!';
@@ -39,6 +60,10 @@ class WelcomeBannerData {
   }
 
   String get subtitle {
+    if (customSubtitle != null) return customSubtitle!;
+    if (isSignOut) {
+      return 'You have been signed out successfully. See you soon!';
+    }
     if (isAdmin) {
       return isNewSignup
           ? 'Your administrative privileges are active.'
@@ -206,7 +231,7 @@ class _WelcomeBannerState extends State<WelcomeBanner> with TickerProviderStateM
                 ),
                 child: Row(
                   children: [
-                    // Animated Waving Hand
+                    // Animated Leading Icon (waving hand or custom sign-out icon)
                     Container(
                       width: 40,
                       height: 40,
@@ -216,20 +241,36 @@ class _WelcomeBannerState extends State<WelcomeBanner> with TickerProviderStateM
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
-                      child: AnimatedBuilder(
-                        animation: _waveAnimation,
-                        builder: (context, child) {
-                          return Transform.rotate(
-                            angle: _waveAnimation.value,
-                            alignment: Alignment.bottomRight,
-                            child: child,
-                          );
-                        },
-                        child: const Text(
-                          '👋',
-                          style: TextStyle(fontSize: 22),
-                        ),
-                      ),
+                      child: widget.data.icon != null
+                          ? AnimatedBuilder(
+                              animation: _waveAnimation,
+                              builder: (context, child) {
+                                return Transform.rotate(
+                                  angle: _waveAnimation.value * 0.35,
+                                  alignment: Alignment.center,
+                                  child: child,
+                                );
+                              },
+                              child: Icon(
+                                widget.data.icon,
+                                size: 20,
+                                color: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
+                              ),
+                            )
+                          : AnimatedBuilder(
+                              animation: _waveAnimation,
+                              builder: (context, child) {
+                                return Transform.rotate(
+                                  angle: _waveAnimation.value,
+                                  alignment: Alignment.bottomRight,
+                                  child: child,
+                                );
+                              },
+                              child: const Text(
+                                '👋',
+                                style: TextStyle(fontSize: 22),
+                              ),
+                            ),
                     ),
                     const SizedBox(width: AppTheme.space12),
 
