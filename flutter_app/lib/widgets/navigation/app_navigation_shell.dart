@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../screens/home/home_screen.dart';
 import '../../screens/catalog/catalog_screen.dart';
 import '../../screens/cart/cart_screen.dart';
 import '../../screens/orders/orders_screen.dart';
-import '../../screens/profile/profile_screen.dart';
 import '../common/welcome_banner.dart';
 import 'custom_bottom_bar.dart';
 
@@ -134,12 +132,15 @@ class AppNavigationShell extends StatefulWidget {
     globalTabNotifier.value = 0;
   }
 
+  static void switchToTab(int index) {
+    globalTabNotifier.value = index;
+  }
+
   static List<Widget> get defaultDestinations => const [
     HomeScreen(),
     CatalogScreen(),
     CartScreen(),
     OrdersScreen(),
-    ProfileScreen(),
   ];
 
   const AppNavigationShell({
@@ -208,9 +209,7 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
   @override
   Widget build(BuildContext context) {
     final cartProvider = Provider.of<CartProvider?>(context);
-    final authProvider = context.watch<AuthProvider>();
     final destinations = widget.destinations ?? AppNavigationShell.defaultDestinations;
-
     final cartUnits = cartProvider?.totalUnits ?? 0;
 
     return TabReselectScope(
@@ -265,12 +264,6 @@ class _AppNavigationShellState extends State<AppNavigationShell> {
                 icon: Icons.receipt_long_outlined,
                 selectedIcon: Icons.receipt_long_rounded,
                 label: 'Orders',
-              ),
-              CustomBottomBarItem(
-                icon: Icons.person_outline_rounded,
-                selectedIcon: Icons.person_rounded,
-                label: authProvider.isAdmin ? 'Admin' : 'Profile',
-                showBadgeDot: authProvider.isAdmin,
               ),
             ],
           ),

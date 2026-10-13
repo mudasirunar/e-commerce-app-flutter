@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/category.dart';
 import '../../models/product.dart';
-import '../../providers/cart_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/catalog_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/catalog/product_card.dart';
@@ -12,9 +12,9 @@ import '../../widgets/home/category_story_bubble.dart';
 import '../../widgets/home/circular_product_item.dart';
 import '../../widgets/home/promo_carousel_banner.dart';
 import '../../widgets/navigation/app_navigation_shell.dart';
-import '../cart/cart_screen.dart';
 import '../catalog/catalog_screen.dart';
 import '../catalog/product_detail_screen.dart';
+import '../profile/profile_screen.dart';
 
 /// Comprehensive modern e-commerce Home storefront featuring an auto-advancing
 /// promotional banner carousel, Instagram-style circular category stories,
@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final catalog = context.watch<CatalogProvider>();
-    final cart = context.watch<CartProvider>();
+    final auth = context.watch<AuthProvider>();
 
     if (catalog.isLoading) {
       return const Scaffold(
@@ -132,22 +132,8 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('E-Commerce App'),
         actions: [
-          IconButton(
-            tooltip: 'Shopping Bag',
-            icon: Badge(
-              isLabelVisible: cart.totalUnits > 0,
-              label: Text('${cart.totalUnits}'),
-              backgroundColor: isDark ? AppTheme.darkAccent : AppTheme.lightAccent,
-              textColor: isDark ? Colors.black : Colors.white,
-              child: const Icon(Icons.shopping_bag_outlined),
-            ),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const CartScreen()),
-              );
-            },
-          ),
-          const SizedBox(width: AppTheme.space8),
+          _buildProfileAvatarAction(context, auth, isDark),
+          const SizedBox(width: AppTheme.space16),
         ],
       ),
       body: ScrollToTopListener(
@@ -864,6 +850,56 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProfileAvatarAction(BuildContext context, AuthProvider auth, bool isDark) {
+    final avatarColor = isDark ? const Color(0xFFC2410C) : const Color(0xFFEA580C);
+    final initial = auth.isAuthenticated && auth.displayName.trim().isNotEmpty
+        ? auth.displayName.trim()[0].toUpperCase()
+        : 'U';
+
+    return Center(
+      child: Tooltip(
+        message: 'My Profile',
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            key: const ValueKey('home_profile_avatar'),
+            borderRadius: BorderRadius.circular(17),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              );
+            },
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: avatarColor,
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: auth.isAuthenticated
+                    ? Text(
+                        initial,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 0,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.person_rounded,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

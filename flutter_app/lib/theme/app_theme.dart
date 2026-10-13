@@ -21,7 +21,9 @@ class AppTheme {
   static const Color darkSurface = Color(0xFF27272A);
   static const Color darkTextPrimary = Color(0xFFFAF8F5);
   static const Color darkTextSecondary = Color(0xFFA1A1AA);
-  static const Color darkAccent = Color(0xFFFB923C); // Glowing Amber / Warm Terracotta
+  static const Color darkAccent = Color(
+    0xFFFB923C,
+  ); // Glowing Amber / Warm Terracotta
   static const Color darkAccentHover = Color(0xFFEA580C);
   static const Color darkAccentContainer = Color(0xFF431407);
   static const Color darkOnAccentContainer = Color(0xFFFDBA74);
@@ -106,7 +108,10 @@ class AppTheme {
           foregroundColor: Colors.white,
           elevation: 0,
           minimumSize: const Size(double.infinity, 48),
-          padding: const EdgeInsets.symmetric(horizontal: space24, vertical: space12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: space24,
+            vertical: space12,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusSmall),
           ),
@@ -122,20 +127,23 @@ class AppTheme {
           foregroundColor: lightTextPrimary,
           minimumSize: const Size(double.infinity, 48),
           side: const BorderSide(color: lightBorder, width: 1.2),
-          padding: const EdgeInsets.symmetric(horizontal: space24, vertical: space12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: space24,
+            vertical: space12,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusSmall),
           ),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: lightSurface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: space16, vertical: space16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: space16,
+          vertical: space16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusSmall),
           borderSide: const BorderSide(color: lightBorder),
@@ -212,7 +220,10 @@ class AppTheme {
           foregroundColor: const Color(0xFF18181B),
           elevation: 0,
           minimumSize: const Size(double.infinity, 48),
-          padding: const EdgeInsets.symmetric(horizontal: space24, vertical: space12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: space24,
+            vertical: space12,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusSmall),
           ),
@@ -228,20 +239,23 @@ class AppTheme {
           foregroundColor: darkTextPrimary,
           minimumSize: const Size(double.infinity, 48),
           side: const BorderSide(color: darkBorder, width: 1.2),
-          padding: const EdgeInsets.symmetric(horizontal: space24, vertical: space12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: space24,
+            vertical: space12,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusSmall),
           ),
-          textStyle: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: darkSurface,
-        contentPadding: const EdgeInsets.symmetric(horizontal: space16, vertical: space16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: space16,
+          vertical: space16,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusSmall),
           borderSide: const BorderSide(color: darkBorder),

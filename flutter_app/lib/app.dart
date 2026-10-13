@@ -5,7 +5,6 @@ import 'screens/cart/cart_screen.dart';
 import 'screens/catalog/catalog_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/orders/orders_screen.dart';
-import 'screens/profile/profile_screen.dart';
 import 'theme/app_theme.dart';
 import 'utils/app_config.dart';
 import 'widgets/navigation/app_navigation_shell.dart';
@@ -37,7 +36,6 @@ class EcommerceApp extends StatelessWidget {
           CatalogScreen(),
           CartScreen(),
           OrdersScreen(),
-          ProfileScreen(),
         ],
       ),
     );

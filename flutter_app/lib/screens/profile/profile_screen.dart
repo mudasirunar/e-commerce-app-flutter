@@ -66,7 +66,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final orderProvider = context.watch<OrderProvider>();
     final addressProvider = context.watch<AddressProvider>();
     final hasBottomBar = ShellNavigationScope.hasBottomBarOf(context);
-    final bottomClearance = hasBottomBar ? 100.0 : 36.0;
+    final bottomClearance = hasBottomBar
+        ? 100.0
+        : (MediaQuery.paddingOf(context).bottom + AppTheme.space24);
 
     // Filter active orders: NOT delivered AND NOT cancelled
     final activeOrders = orderProvider.orders.where((o) {
@@ -85,15 +87,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.3),
         ),
       ),
-      body: ScrollToTopListener(
-        tabIndex: 4,
-        scrollController: _scrollController,
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppTheme.space20,
-            vertical: AppTheme.space16,
-          ),
+      body: SingleChildScrollView(
+        controller: _scrollController,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.space20,
+          vertical: AppTheme.space16,
+        ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -201,8 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   // ==================== USER ACCOUNT CARD ====================
@@ -667,7 +665,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 onPressed: () {
-                  AppNavigationShell.globalTabNotifier.value = 3; // Orders tab
+                  if (Navigator.canPop(context)) {
+                    Navigator.of(context).pop();
+                  }
+                  AppNavigationShell.switchToTab(3); // Orders tab
                 },
                 child: Text(
                   'View All',
@@ -770,7 +771,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         InkWell(
           onTap: () {
             if (isAuthenticated) {
-              AppNavigationShell.globalTabNotifier.value = 2; // Cart tab
+              if (Navigator.canPop(context)) {
+                Navigator.of(context).pop();
+              }
+              AppNavigationShell.switchToTab(2); // Cart tab
             } else {
               _promptSignIn(context);
             }
@@ -919,7 +923,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: '$completedOrdersCount completed',
                 onTap: () {
                   if (isAuthenticated) {
-                    AppNavigationShell.globalTabNotifier.value = 3; // Orders tab
+                    if (Navigator.canPop(context)) {
+                      Navigator.of(context).pop();
+                    }
+                    AppNavigationShell.switchToTab(3); // Orders tab
                   } else {
                     _promptSignIn(context);
                   }
